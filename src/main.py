@@ -6,6 +6,25 @@ from config_manager import ConfigManager
 from gui.tray_icon_manager import TrayIconManager
 import pyperclip
 from pynput import keyboard
+from PySide6.QtCore import QThread, Signal as QSignal
+
+
+class OCRWorker(QThread):
+    finished = QSignal(str)
+    error = QSignal(str)
+
+    def __init__(self, ocr_processor, screenshot_pixmap):
+        super().__init__()
+        self.ocr_processor = ocr_processor
+        self.screenshot_pixmap = screenshot_pixmap
+
+    def run(self):
+        try:
+            image_bytes = self.ocr_processor.image_to_bytes(self.screenshot_pixmap)
+            latex_text = self.ocr_processor.process_image(image_bytes)
+            self.finished.emit(latex_text)
+        except Exception as e:
+            self.error.emit(str(e))
 
 
 class LiteOCRApp(QtCore.QObject):
@@ -61,13 +80,9 @@ class LiteOCRApp(QtCore.QObject):
     def capture_and_process(self):
         if not self.ocr_processor:
             self.tray_icon_manager.show_message(
-                "LiteOCR Error", "Please configure API key first", "icon.svg", 5000
+                "LiteOCR Error", "Please configure API key first", "icon.svg"
             )
             return
-
-        self.tray_icon_manager.show_message(
-            "LiteOCR", "Select area to OCR", "icon.svg", 2000
-        )
 
         # Create and show the screenshot overlay
         self.screenshot_overlay = ScreenshotOverlay()
@@ -79,33 +94,38 @@ class LiteOCRApp(QtCore.QObject):
         self.screenshot_overlay.raise_()
 
     def _process_captured_screenshot(self, screenshot_pixmap):
-        """Handles the captured screenshot pixmap."""
+        """Handles the captured screenshot pixmap asynchronously."""
         if not screenshot_pixmap:
             return
-            
+
         if not self.ocr_processor:
             self.tray_icon_manager.show_message(
-                "LiteOCR Error", 
+                "LiteOCR Error",
                 "OCR processor not initialized. Please check your API key.",
                 "icon.svg",
-                5000
             )
             return
-            
-        try:
-            image_bytes = self.ocr_processor.image_to_bytes(screenshot_pixmap)
-            latex_text = self.ocr_processor.process_image(image_bytes)
-            pyperclip.copy(latex_text)
-            self.tray_icon_manager.show_message(
-                "LiteOCR", "LaTeX copied to clipboard!", "icon.svg", 2000
-            )
-        except Exception as e:
-            self.tray_icon_manager.show_message(
-                "LiteOCR Error",
-                f"Failed to process image: {str(e)}",
-                "icon.svg",
-                5000,
-            )
+
+        # Create and start worker thread
+        self.worker = OCRWorker(self.ocr_processor, screenshot_pixmap)
+        self.worker.finished.connect(self._on_ocr_finished)
+        self.worker.error.connect(self._on_ocr_error)
+        self.worker.start()
+
+    def _on_ocr_finished(self, latex_text):
+        """Handles successful OCR completion."""
+        pyperclip.copy(latex_text)
+        self.tray_icon_manager.show_message(
+            "LiteOCR", "LaTeX copied to clipboard!", "icon.svg"
+        )
+
+    def _on_ocr_error(self, error_msg):
+        """Handles OCR processing errors."""
+        self.tray_icon_manager.show_message(
+            "LiteOCR Error",
+            f"Failed to process image: {error_msg}",
+            "icon.svg"
+        )
 
     def show_settings(self):
         config_window = ConfigWindow(config_manager=self.config_manager)

@@ -19,6 +19,6 @@ class TrayIconManager:
         """Shows the tray icon."""
         self.tray.show()
 
-    def show_message(self, title, message, icon_path="icon.svg", duration=2000):
+    def show_message(self, title, message, icon_path="icon.svg"):
         """Displays a message from the tray icon."""
-        self.tray.showMessage(title, message, QtGui.QIcon(icon_path), duration)
+        self.tray.showMessage(title, message, QtGui.QIcon(icon_path))
