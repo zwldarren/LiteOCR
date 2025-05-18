@@ -18,7 +18,7 @@ class IconManager:
         Returns:
             QIcon object
         """
-        icon_path = f"{name}.svg"
+        icon_path = f"resources/{name}.svg"
         if QFile.exists(icon_path):
             return QIcon(icon_path)
         return QIcon()
@@ -29,12 +29,12 @@ class IconManager:
 
     @staticmethod
     def get_settings_icon() -> QIcon:
-        return IconManager.get_icon("resources/icon-settings")
+        return IconManager.get_icon("icon-settings")
 
     @staticmethod
     def get_exit_icon() -> QIcon:
-        return IconManager.get_icon("resources/exit-arrow")
+        return IconManager.get_icon("exit-arrow")
 
     @staticmethod
     def get_arrow_down_icon() -> QIcon:
-        return IconManager.get_icon("resources/arrow-down")
+        return IconManager.get_icon("arrow-down")
