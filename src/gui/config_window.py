@@ -10,8 +10,9 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QWidget,
 )
-from PySide6.QtGui import QPixmap, QFont
+from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
+from .icon_manager import IconManager
 
 
 class StyledLineEdit(QLineEdit):
@@ -180,7 +181,7 @@ class ConfigWindow(QDialog):
         # Header
         header_layout = QHBoxLayout()
         icon_label = QLabel()
-        icon_pixmap = QPixmap("icon.svg")
+        icon_pixmap = IconManager.get_tray_icon().pixmap(32, 32)
         if not icon_pixmap.isNull():
             icon_label.setPixmap(
                 icon_pixmap.scaled(

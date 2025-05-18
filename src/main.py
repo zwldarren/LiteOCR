@@ -53,7 +53,6 @@ class LiteOCRApp(QtCore.QObject):
         self.app_translator = QTranslator()
         locale = QtCore.QLocale()
         lang = locale.name()
-        lang = "zh_CN"
 
         # try loading the translation files in different locations
         if self.app_translator.load(f"translations/liteocr_{lang}.qm"):
@@ -108,7 +107,7 @@ class LiteOCRApp(QtCore.QObject):
             self.tray_icon_manager.show_message(
                 self.tr("LiteOCR Error"),
                 self.tr("Please configure API key first"),
-                "icon.svg",
+                "icon",
             )
             return
 
@@ -130,7 +129,7 @@ class LiteOCRApp(QtCore.QObject):
             self.tray_icon_manager.show_message(
                 self.tr("LiteOCR Error"),
                 self.tr("OCR processor not initialized. Please check your API key."),
-                "icon.svg",
+                "icon",
             )
             return
 
@@ -144,7 +143,7 @@ class LiteOCRApp(QtCore.QObject):
         """Handles successful OCR completion."""
         pyperclip.copy(latex_text)
         self.tray_icon_manager.show_message(
-            self.tr("LiteOCR"), self.tr("LaTeX copied to clipboard!"), "icon.svg"
+            self.tr("LiteOCR"), self.tr("LaTeX copied to clipboard!"), "icon"
         )
 
     def _on_ocr_error(self, error_msg):
@@ -152,7 +151,7 @@ class LiteOCRApp(QtCore.QObject):
         self.tray_icon_manager.show_message(
             self.tr("LiteOCR Error"),
             self.tr("Failed to process image: ") + error_msg,
-            "icon.svg",
+            "icon",
         )
 
     def show_settings(self):
