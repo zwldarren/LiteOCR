@@ -1,16 +1,10 @@
 <div align="center">
-  <svg width="128" height="128" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
-    <rect width="256" height="256" rx="40" fill="#1565C0" />
-    <rect x="78" y="68" width="100" height="120" rx="8" fill="#F5F5F5" />
-    <rect x="90" y="88" width="76" height="6" rx="3" fill="#1565C0" />
-    <rect x="90" y="104" width="76" height="6" rx="3" fill="#1565C0" />
-    <rect x="90" y="120" width="60" height="6" rx="3" fill="#1565C0" />
-    <rect x="78" y="135" width="100" height="3" fill="#1565C0" opacity="0.7" />
-    <rect x="170" y="134" width="5" height="5" rx="2.5" fill="#FFFFFF" />
-    <rect x="78" y="134" width="5" height="5" rx="2.5" fill="#FFFFFF" />
-    <text x="128" y="218" font-family="Arial, sans-serif" font-size="24" font-weight="bold"
-      text-anchor="middle" fill="white">LiteOCR</text>
-  </svg>
+  <img src="resources/icon.png" width="128" height="128" alt="LiteOCR Icon">
+</div>
+
+<div align="center">
+  <a href="README.md">English</a> |
+  <a href="README_zh.md">中文</a>
 </div>
 
 # LiteOCR - 快速截图 OCR 工具
