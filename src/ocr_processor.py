@@ -11,13 +11,30 @@ class OCRProcessor:
         self.model = model
         self.base_url = base_url
         self.prompt = """
-Convert the image content to clean LaTeX format. 
-STRICTLY ONLY return the raw LaTeX code - no:
-- Explanations
-- Error messages
-- Markdown code blocks
-- Document templates
-- Any other text
+Convert the image content to structured Markdown with these guidelines:  
+1. **Mathematical Formulas**:  
+   - Inline equations: `$...$`  
+   - Block equations: `$$...$$`  
+   - Preserve symbols/notation exactly  
+
+2. **Tables**:  
+   - Use Markdown table syntax with alignment indicators (`:---`, `:---:`, `---:`)  
+   - If unclear, infer columns/rows from content  
+   - Add `<!-- Uncertain table structure -->` if formatting is ambiguous  
+
+3. **Text Formatting**:  
+   - Use `**bold**` and `*italic*` when visually evident  
+   - Preserve numbered/bulleted lists  
+
+4. **Unclear Content**:  
+   - Keep raw text without formatting if ambiguous  
+   - Add `<!-- Unclear content: ... -->` comments for uncertain sections  
+
+5. **Code/Equations**:  
+   - Use ` ``` ` blocks for code snippets  
+   - Combine with LaTeX for annotated equations  
+
+STRICTLY return ONLY raw Markdown text - no explanations, wrappers, Markdown code block or non-Markdown elements.
 """
 
     def process_image(self, screenshot_pixmap: bytes) -> str:
@@ -55,7 +72,8 @@ STRICTLY ONLY return the raw LaTeX code - no:
 
             chain = prompt_template | model
             response = chain.invoke({"image_data": image_data})
-            return response.text()
+            text = response.text()
+            return text
         except Exception as e:
             raise Exception(f"OCR processing failed: {str(e)}")
 
