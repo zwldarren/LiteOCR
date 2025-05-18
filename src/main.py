@@ -1,4 +1,5 @@
 from PySide6 import QtCore, QtWidgets
+from PySide6.QtCore import QTranslator, QLibraryInfo
 from gui.config_window import ConfigWindow
 from gui.screenshot import ScreenshotOverlay
 from ocr_processor import OCRProcessor
@@ -41,6 +42,31 @@ class LiteOCRApp(QtCore.QObject):
         else:
             self.app = QtWidgets.QApplication([])
 
+        # Load translations
+        self.qt_translator = QTranslator()
+        if self.qt_translator.load(
+            "qt_" + QtCore.QLocale().name(),
+            QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath),
+        ):
+            self.app.installTranslator(self.qt_translator)
+
+        self.app_translator = QTranslator()
+        locale = QtCore.QLocale()
+        lang = locale.name()
+        lang = "zh_CN"
+
+        # try loading the translation files in different locations
+        if self.app_translator.load(f"translations/liteocr_{lang}.qm"):
+            self.app.installTranslator(self.app_translator)
+        elif self.app_translator.load(f":/translations/liteocr_{lang}"):
+            self.app.installTranslator(self.app_translator)
+        elif self.app_translator.load(f"liteocr_{lang}", "translations"):
+            self.app.installTranslator(self.app_translator)
+        else:
+            print(
+                f"Warning: Could not load application translation file for language {lang}"
+            )
+
         self.app.setQuitOnLastWindowClosed(False)
 
         self.config_manager = ConfigManager()
@@ -80,7 +106,9 @@ class LiteOCRApp(QtCore.QObject):
     def capture_and_process(self):
         if not self.ocr_processor:
             self.tray_icon_manager.show_message(
-                "LiteOCR Error", "Please configure API key first", "icon.svg"
+                self.tr("LiteOCR Error"),
+                self.tr("Please configure API key first"),
+                "icon.svg",
             )
             return
 
@@ -100,8 +128,8 @@ class LiteOCRApp(QtCore.QObject):
 
         if not self.ocr_processor:
             self.tray_icon_manager.show_message(
-                "LiteOCR Error",
-                "OCR processor not initialized. Please check your API key.",
+                self.tr("LiteOCR Error"),
+                self.tr("OCR processor not initialized. Please check your API key."),
                 "icon.svg",
             )
             return
@@ -116,15 +144,15 @@ class LiteOCRApp(QtCore.QObject):
         """Handles successful OCR completion."""
         pyperclip.copy(latex_text)
         self.tray_icon_manager.show_message(
-            "LiteOCR", "LaTeX copied to clipboard!", "icon.svg"
+            self.tr("LiteOCR"), self.tr("LaTeX copied to clipboard!"), "icon.svg"
         )
 
     def _on_ocr_error(self, error_msg):
         """Handles OCR processing errors."""
         self.tray_icon_manager.show_message(
-            "LiteOCR Error",
-            f"Failed to process image: {error_msg}",
-            "icon.svg"
+            self.tr("LiteOCR Error"),
+            self.tr("Failed to process image: ") + error_msg,
+            "icon.svg",
         )
 
     def show_settings(self):
