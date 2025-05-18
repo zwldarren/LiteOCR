@@ -80,27 +80,36 @@ class LiteOCRApp(QtCore.QObject):
 
     def _process_captured_screenshot(self, screenshot_pixmap):
         """Handles the captured screenshot pixmap."""
-        if screenshot_pixmap:
-            try:
-                if self.ocr_processor:
-                    latex_text = self.ocr_processor.process_image(
-                        self.ocr_processor.image_to_bytes(screenshot_pixmap)
-                    )
-                pyperclip.copy(latex_text)
-                self.tray_icon_manager.show_message(
-                    "LiteOCR", "LaTeX copied to clipboard!", "icon.svg", 2000
-                )
-            except Exception as e:
-                self.tray_icon_manager.show_message(
-                    "LiteOCR Error",
-                    f"Failed to process image: {str(e)}",
-                    "icon.svg",
-                    5000,
-                )
+        if not screenshot_pixmap:
+            return
+            
+        if not self.ocr_processor:
+            self.tray_icon_manager.show_message(
+                "LiteOCR Error", 
+                "OCR processor not initialized. Please check your API key.",
+                "icon.svg",
+                5000
+            )
+            return
+            
+        try:
+            image_bytes = self.ocr_processor.image_to_bytes(screenshot_pixmap)
+            latex_text = self.ocr_processor.process_image(image_bytes)
+            pyperclip.copy(latex_text)
+            self.tray_icon_manager.show_message(
+                "LiteOCR", "LaTeX copied to clipboard!", "icon.svg", 2000
+            )
+        except Exception as e:
+            self.tray_icon_manager.show_message(
+                "LiteOCR Error",
+                f"Failed to process image: {str(e)}",
+                "icon.svg",
+                5000,
+            )
 
     def show_settings(self):
         config_window = ConfigWindow(config_manager=self.config_manager)
-        result = config_window.exec_()
+        result = config_window.exec()
 
         # If settings were saved, reinitialize OCRProcessor with new config
         if result == QtWidgets.QDialog.DialogCode.Accepted:

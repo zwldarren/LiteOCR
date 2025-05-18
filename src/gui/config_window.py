@@ -19,6 +19,13 @@ class ConfigWindow(QDialog):
         # Main layout
         layout = QVBoxLayout()
 
+        # Provider Selection
+        layout.addWidget(QLabel("Provider:"))
+        self.provider_combo = QComboBox()
+        self.provider_combo.addItems(["openai", "openai-compatible", "gemini"])
+        self.provider_combo.currentTextChanged.connect(self._update_ui_visibility)
+        layout.addWidget(self.provider_combo)
+
         # API Key Section
         layout.addWidget(QLabel("LLM API Key:"))
         self.api_key_input = QLineEdit()
@@ -27,17 +34,17 @@ class ConfigWindow(QDialog):
 
         # Model Selection
         layout.addWidget(QLabel("Model:"))
-        self.model_combo = QComboBox()
-        self.model_combo.addItems(["gpt-4.1-mini"])
-        layout.addWidget(self.model_combo)
+        self.model_input = QLineEdit()
+        self.model_input.setPlaceholderText("Enter model name (e.g. gpt-4.1-mini)")
+        layout.addWidget(self.model_input)
 
         # API Base URL
-        layout.addWidget(QLabel("API Base URL:"))
+        self.base_url_label = QLabel("API Base URL:")
         self.base_url_input = QLineEdit()
-        self.base_url_input.setPlaceholderText(
-            "Leave empty for default OpenAI endpoint"
-        )
+        self.base_url_input.setPlaceholderText("Enter custom API endpoint")
+        layout.addWidget(self.base_url_label)
         layout.addWidget(self.base_url_input)
+        self._update_ui_visibility()  # Set initial visibility
 
         # Shortcut Settings
         layout.addWidget(QLabel("Screenshot Shortcut:"))
@@ -63,16 +70,33 @@ class ConfigWindow(QDialog):
         if config_manager:
             config = config_manager.load_config()
             self.api_key_input.setText(config["api_key"])
-            self.model_combo.setCurrentText(config["model"])
+            self.provider_combo.setCurrentText(config.get("provider", "openai"))
             self.base_url_input.setText(config["base_url"])
+            # Set initial model value
+            self.model_input.setText(config["model"])
+
+    def _update_ui_visibility(self):
+        """Updates UI element visibility based on provider selection."""
+        show_base_url = self.provider_combo.currentText() == "openai-compatible"
+        self.base_url_label.setVisible(show_base_url)
+        self.base_url_input.setVisible(show_base_url)
 
     def _save_config(self):
         """Saves the current configuration."""
         if self.config_manager:
+            # Get current model and provider
+            current_model = self.model_input.text()
+            current_provider = self.provider_combo.currentText()
+
+            # Initialize empty custom models (we no longer track them separately)
+            custom_models = {}
+
             config = {
                 "api_key": self.api_key_input.text(),
-                "model": self.model_combo.currentText(),
+                "provider": current_provider,
+                "model": current_model,
                 "base_url": self.base_url_input.text(),
+                "custom_models": custom_models,
             }
             self.config_manager.save_config(config)
         self.accept()
