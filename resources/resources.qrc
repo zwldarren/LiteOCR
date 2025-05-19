@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="/icons">
+    <file>icons/arrow-down.svg</file>
+    <file alias="exit-arrow.svg">icons/exit-arrow.svg</file>
+    <file alias="icon-settings.svg">icons/icon-settings.svg</file>
+    <file>icons/icon.png</file>
+    <file alias="icon.svg">icons/icon.svg</file>
+  </qresource>
+  <qresource prefix="/translations">
+    <file alias="liteocr_zh_CN.qm">translations/liteocr_zh_CN.qm</file>
+  </qresource>
+</RCC>

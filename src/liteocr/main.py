@@ -1,3 +1,6 @@
+import liteocr.resources_rc  # noqa: F401
+
+# Then import everything else
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QTranslator, QLibraryInfo
 from liteocr.gui.config_window import ConfigWindow
@@ -54,17 +57,13 @@ class LiteOCRApp(QtCore.QObject):
         locale = QtCore.QLocale()
         lang = locale.name()
 
-        # try loading the translation files in different locations
-        if self.app_translator.load(f"translations/liteocr_{lang}.qm"):
+        # Load translation from Qt resource system
+        if lang != "en_US":
+            if not self.app_translator.load(f":/translations/liteocr_{lang}.qm"):
+                print(
+                    f"Warning: Could not load application translation file for language {lang}"
+                )
             self.app.installTranslator(self.app_translator)
-        elif self.app_translator.load(f":/translations/liteocr_{lang}"):
-            self.app.installTranslator(self.app_translator)
-        elif self.app_translator.load(f"liteocr_{lang}", "translations"):
-            self.app.installTranslator(self.app_translator)
-        else:
-            print(
-                f"Warning: Could not load application translation file for language {lang}"
-            )
 
         self.app.setQuitOnLastWindowClosed(False)
 

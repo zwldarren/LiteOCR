@@ -12,3 +12,4 @@ wheels/
 .vscode/
 *build/
 *dist/
+resources_rc.py

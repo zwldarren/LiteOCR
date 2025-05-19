@@ -30,6 +30,7 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -e .[build]
+          pyside6-rcc resources/resources.qrc -o src/liteocr/resources_rc.py
 
       - name: Build with Nuitka
         uses: Nuitka/Nuitka-Action@main
@@ -38,16 +39,13 @@ jobs:
           script-name: src/liteocr/main.py
           mode: app
           enable-plugins: pyside6
-          include-data-files: |
-            resources/*=resources/
-            translations/*=translations/
           nofollow-import-to: |
             numpy
           windows-console-mode: disable
-          windows-icon-from-ico: resources/icon.png
-          macos-app-icon: resources/icon.png
+          windows-icon-from-ico: resources/icons/icon.png
+          macos-app-icon: resources/icons/icon.png
           macos-app-name: LiteOCR
-          linux-icon: resources/icon.png
+          linux-icon: resources/icons/icon.png
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

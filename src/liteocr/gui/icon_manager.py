@@ -1,5 +1,4 @@
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import QFile
 
 
 class IconManager:
@@ -18,23 +17,20 @@ class IconManager:
         Returns:
             QIcon object
         """
-        icon_path = f"resources/{name}.svg"
-        if QFile.exists(icon_path):
-            return QIcon(icon_path)
-        return QIcon()
+        return QIcon(f":/icons/{name}.svg")
 
     @staticmethod
     def get_tray_icon() -> QIcon:
-        return IconManager.get_icon("icon")
+        return QIcon(":/icons/icon.svg")
 
     @staticmethod
     def get_settings_icon() -> QIcon:
-        return IconManager.get_icon("icon-settings")
+        return QIcon(":/icons/icon-settings.svg")
 
     @staticmethod
     def get_exit_icon() -> QIcon:
-        return IconManager.get_icon("exit-arrow")
+        return QIcon(":/icons/exit-arrow.svg")
 
     @staticmethod
     def get_arrow_down_icon() -> QIcon:
-        return IconManager.get_icon("arrow-down")
+        return QIcon(":/icons/arrow-down.svg")
