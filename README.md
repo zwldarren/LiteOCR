@@ -11,6 +11,8 @@
 
 An OCR tool that uses large language models to convert screenshot text into Markdown format and copies it to the clipboard.
 
+> **Note**: The project is still in the early stages of development. The current version is a prototype and may have bugs. Please report any issues you encounter.
+
 ## ✨ Features
 
 - **Quick Screenshot**: Use the hotkey (Ctrl+Alt+S) to quickly capture a screen area.
