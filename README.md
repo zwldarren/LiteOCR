@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="resources/icon.png" width="128" height="128" alt="LiteOCR Icon">
+  <img src="resources/icons/icon.png" width="128" height="128" alt="LiteOCR Icon">
 </div>
 
 <div align="center">
