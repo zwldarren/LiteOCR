@@ -9,8 +9,8 @@ from liteocr.gui.screenshot import ScreenshotOverlay
 from liteocr.ocr_processor import OCRProcessor
 from liteocr.config_manager import ConfigManager
 from liteocr.gui.tray_icon_manager import TrayIconManager
+from liteocr.hotkey_manager import HotkeyListenerThread
 import pyperclip
-from pynput import keyboard
 from PySide6.QtCore import QThread, Signal as QSignal
 
 # Set up logging
@@ -44,7 +44,6 @@ class OCRWorker(QThread):
 
 
 class LiteOCRApp(QtCore.QObject):
-    hotkey_triggered = QtCore.Signal()
     app: QtWidgets.QApplication
 
     def __init__(self):
@@ -59,6 +58,7 @@ class LiteOCRApp(QtCore.QObject):
         self._setup_translators()  # Load initial translations
 
         self.app.setQuitOnLastWindowClosed(False)
+        self.config_window = None  # To store the active config window instance
 
         self.ocr_processor = None
         self.tray_icon_manager = TrayIconManager(
@@ -72,8 +72,9 @@ class LiteOCRApp(QtCore.QObject):
         self._initialize_ocr_processor()
 
         self.screenshot_overlay = None
+        self.hotkey_listener_thread = None
 
-        self._setup_hotkey_listener()
+        self._setup_hotkey_listener_thread()
         self._connect_signals()
 
         # Show startup notification
@@ -85,18 +86,19 @@ class LiteOCRApp(QtCore.QObject):
             "icon",
         )
 
-    def _setup_hotkey_listener(self):
-        """Sets up and starts the global hotkey listener."""
-        self._teardown_hotkey_listener()
+    def _setup_hotkey_listener_thread(self):
+        """Sets up and starts the hotkey listener thread."""
+        self._teardown_hotkey_listener_thread()
         try:
             config = self.config_manager.load_config()
             hotkey_str = config.get("hotkey", "<ctrl>+<alt>+s")
-            self.hotkey_listener = keyboard.GlobalHotKeys(
-                {hotkey_str: self._on_hotkey_activated}
+            self.hotkey_listener_thread = HotkeyListenerThread(hotkey_str)
+            self.hotkey_listener_thread.hotkey_activated.connect(
+                self.capture_and_process
             )
-            self.hotkey_listener.start()
+            self.hotkey_listener_thread.start()
         except Exception as e:
-            logging.error(f"Failed to set up hotkey listener: {e}")
+            logging.error(f"Failed to set up hotkey listener thread: {e}")
             if self.tray_icon_manager:
                 self.tray_icon_manager.show_message(
                     "LiteOCR Error",
@@ -104,18 +106,18 @@ class LiteOCRApp(QtCore.QObject):
                     "icon",
                 )
 
-    def _teardown_hotkey_listener(self):
-        """Stops the global hotkey listener."""
+    def _teardown_hotkey_listener_thread(self):
+        """Stops the hotkey listener thread."""
         try:
-            if hasattr(self, "hotkey_listener") and self.hotkey_listener.is_alive():
-                self.hotkey_listener.stop()
+            if self.hotkey_listener_thread and self.hotkey_listener_thread.isRunning():
+                self.hotkey_listener_thread.stop_listener()
+                self.hotkey_listener_thread = None
         except Exception as e:
-            logging.error(f"Error tearing down hotkey listener: {e}")
+            logging.error(f"Error tearing down hotkey listener thread: {e}")
 
     def _connect_signals(self):
         """Connects application signals to their respective slots."""
-        self.app.aboutToQuit.connect(self._teardown_hotkey_listener)
-        self.hotkey_triggered.connect(self.capture_and_process)
+        self.app.aboutToQuit.connect(self._teardown_hotkey_listener_thread)
 
     def _initialize_ocr_processor(self):
         """Initializes or reinitializes the OCR processor based on the current configuration."""
@@ -181,16 +183,15 @@ class LiteOCRApp(QtCore.QObject):
         except Exception as e:
             logging.error(f"Error loading translations for {lang}: {e}")
 
-    def _on_hotkey_activated(self):
-        """Callback for pynput hotkey activation."""
-        self.hotkey_triggered.emit()
-
     def _show_screenshot_overlay(self):
         """Creates and shows the screenshot overlay."""
         try:
             self.screenshot_overlay = ScreenshotOverlay()
             self.screenshot_overlay.selection_captured.connect(
                 self._process_captured_screenshot
+            )
+            self.screenshot_overlay.overlay_closed.connect(
+                self._handle_screenshot_overlay_closed
             )
             self.screenshot_overlay.show()
             self.screenshot_overlay.activateWindow()
@@ -206,6 +207,10 @@ class LiteOCRApp(QtCore.QObject):
 
     def capture_and_process(self):
         """Initiates the screen capture process if OCR processor is ready."""
+        if self.config_window and self.config_window.isVisible():
+            logging.debug("Settings window is open. Hiding it for screenshot.")
+            self.config_window.hide()
+
         if not self.ocr_processor:
             self.tray_icon_manager.show_message(
                 "LiteOCR Error",
@@ -249,13 +254,33 @@ class LiteOCRApp(QtCore.QObject):
             "icon",
         )
 
+    def _handle_screenshot_overlay_closed(self):
+        """Restores the settings window if it was hidden for a screenshot."""
+        if self.config_window and not self.config_window.isVisible():
+            logging.debug("Screenshot overlay closed. Restoring settings window.")
+            self.config_window.show()
+            self.config_window.activateWindow()
+            self.config_window.raise_()
+        self.screenshot_overlay = None
+
+    def _on_config_window_closed(self):
+        """Called when the config window is closed."""
+        logging.debug("Config window closed.")
+        self.config_window = None
+
     def show_settings(self):
+        if self.config_window:  # If already open, bring to front
+            self.config_window.activateWindow()
+            self.config_window.raise_()
+            return
+
         try:
             initial_config = self.config_manager.load_config()
             old_hotkey = initial_config.get("hotkey")
 
-            config_window = ConfigWindow(config_manager=self.config_manager)
-            result = config_window.exec()
+            self.config_window = ConfigWindow(config_manager=self.config_manager)
+            self.config_window.finished.connect(self._on_config_window_closed)
+            result = self.config_window.exec()
 
             # If settings were saved, reinitialize OCRProcessor with new config and reload translations
             if result == QtWidgets.QDialog.DialogCode.Accepted:
@@ -275,12 +300,13 @@ class LiteOCRApp(QtCore.QObject):
                 if self.tray_icon_manager:
                     self.tray_icon_manager.update_texts()
 
-                # Restart hotkey listener if the hotkey changed
+                # Restart hotkey listener thread if the hotkey changed
                 if old_hotkey != new_hotkey:
                     logging.info(
-                        f"Hotkey changed from '{old_hotkey}' to '{new_hotkey}'. Restarting listener."
+                        f"Hotkey changed from '{old_hotkey}' to '{new_hotkey}'. Restarting listener thread."
                     )
-                    self._setup_hotkey_listener()
+                    self._teardown_hotkey_listener_thread()
+                    self._setup_hotkey_listener_thread()
         except Exception as e:
             logging.error(f"Error in show_settings: {e}")
             if self.tray_icon_manager:

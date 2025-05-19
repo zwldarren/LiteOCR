@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt, QRect, Signal
 
 class ScreenshotOverlay(QWidget):
     selection_captured = Signal(QPixmap)
+    overlay_closed = Signal()  # New signal
 
     def __init__(self):
         super().__init__()
@@ -73,3 +74,7 @@ class ScreenshotOverlay(QWidget):
 
         rect = QRect(self.start_pos, self.end_pos).normalized()
         return screen.grabWindow(0, rect.x(), rect.y(), rect.width(), rect.height())
+
+    def closeEvent(self, event):
+        self.overlay_closed.emit()
+        super().closeEvent(event)
