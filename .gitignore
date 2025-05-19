@@ -13,3 +13,4 @@ wheels/
 *build/
 *dist/
 resources_rc.py
+logs/

@@ -1,4 +1,6 @@
 import liteocr.resources_rc  # noqa: F401
+import logging
+import os
 
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QTranslator, QLibraryInfo
@@ -10,6 +12,17 @@ from liteocr.gui.tray_icon_manager import TrayIconManager
 import pyperclip
 from pynput import keyboard
 from PySide6.QtCore import QThread, Signal as QSignal
+
+# Set up logging
+log_dir = "logs"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(f"{log_dir}/liteocr.log"), logging.StreamHandler()],
+)
 
 
 class OCRWorker(QThread):
@@ -51,7 +64,10 @@ class LiteOCRApp(QtCore.QObject):
         self.tray_icon_manager = TrayIconManager(
             settings_callback=self.show_settings, exit_callback=self.app.quit
         )
-        self.tray_icon_manager.show()
+        try:
+            self.tray_icon_manager.show()
+        except Exception as e:
+            logging.error(f"Error showing tray icon: {e}")
 
         self._initialize_ocr_processor()
 
@@ -62,15 +78,27 @@ class LiteOCRApp(QtCore.QObject):
 
     def _setup_hotkey_listener(self):
         """Sets up and starts the global hotkey listener."""
-        self.hotkey_listener = keyboard.GlobalHotKeys(
-            {"<ctrl>+<alt>+s": self._on_hotkey_activated}
-        )
-        self.hotkey_listener.start()
+        try:
+            self.hotkey_listener = keyboard.GlobalHotKeys(
+                {"<ctrl>+<alt>+s": self._on_hotkey_activated}
+            )
+            self.hotkey_listener.start()
+        except Exception as e:
+            logging.error(f"Failed to set up hotkey listener: {e}")
+            if self.tray_icon_manager:
+                self.tray_icon_manager.show_message(
+                    self.tr("LiteOCR Error"),
+                    self.tr("Failed to set up hotkey listener: ") + str(e),
+                    "icon",
+                )
 
     def _teardown_hotkey_listener(self):
         """Stops the global hotkey listener."""
-        if hasattr(self, "hotkey_listener") and self.hotkey_listener.is_alive():
-            self.hotkey_listener.stop()
+        try:
+            if hasattr(self, "hotkey_listener") and self.hotkey_listener.is_alive():
+                self.hotkey_listener.stop()
+        except Exception as e:
+            logging.error(f"Error tearing down hotkey listener: {e}")
 
     def _connect_signals(self):
         """Connects application signals to their respective slots."""
@@ -79,19 +107,29 @@ class LiteOCRApp(QtCore.QObject):
 
     def _initialize_ocr_processor(self):
         """Initializes or reinitializes the OCR processor based on the current configuration."""
-        config = self.config_manager.load_config()
-        api_key = config.get("api_key")
-        provider = config.get("provider")
+        try:
+            config = self.config_manager.load_config()
+            api_key = config.get("api_key")
+            provider = config.get("provider")
 
-        if api_key and provider:
-            self.ocr_processor = OCRProcessor(
-                str(provider),
-                str(api_key),
-                str(config.get("model", "")),
-                str(config.get("base_url", "")),
-            )
-        else:
+            if api_key and provider:
+                self.ocr_processor = OCRProcessor(
+                    str(provider),
+                    str(api_key),
+                    str(config.get("model", "")),
+                    str(config.get("base_url", "")),
+                )
+            else:
+                self.ocr_processor = None
+        except Exception as e:
+            logging.error(f"Error initializing OCR processor: {e}")
             self.ocr_processor = None
+            if self.tray_icon_manager:
+                self.tray_icon_manager.show_message(
+                    self.tr("LiteOCR Error"),
+                    self.tr("Error initializing OCR processor: ") + str(e),
+                    "icon",
+                )
 
     def _setup_translators(self):
         """Sets up initial translations based on configuration or system locale."""
@@ -105,28 +143,31 @@ class LiteOCRApp(QtCore.QObject):
     def _load_translations(self, lang):
         """Loads Qt and application translations for the given language."""
         if not hasattr(self, "app"):
-            print("Error: QApplication instance not found for translations.")
+            logging.error("QApplication instance not found for translations.")
             return
 
-        # Remove existing translators before loading new ones
-        self.app.removeTranslator(self.qt_translator)
-        self.app.removeTranslator(self.app_translator)
+        try:
+            # Remove existing translators before loading new ones
+            self.app.removeTranslator(self.qt_translator)
+            self.app.removeTranslator(self.app_translator)
 
-        # Load Qt base translations
-        if self.qt_translator.load(
-            "qt_" + lang,
-            QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath),
-        ):
-            self.app.installTranslator(self.qt_translator)
+            # Load Qt base translations
+            if self.qt_translator.load(
+                "qt_" + lang,
+                QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath),
+            ):
+                self.app.installTranslator(self.qt_translator)
 
-        # Load application translations if not English
-        if lang != "en_US":
-            if self.app_translator.load(f":/translations/liteocr_{lang}.qm"):
-                self.app.installTranslator(self.app_translator)
-            else:
-                print(
-                    f"Warning: Could not load application translation file for language {lang}"
-                )
+            # Load application translations if not English
+            if lang != "en_US":
+                if self.app_translator.load(f":/translations/liteocr_{lang}.qm"):
+                    self.app.installTranslator(self.app_translator)
+                else:
+                    logging.warning(
+                        f"Could not load application translation file for language {lang}"
+                    )
+        except Exception as e:
+            logging.error(f"Error loading translations for {lang}: {e}")
 
     def _on_hotkey_activated(self):
         """Callback for pynput hotkey activation."""
@@ -134,13 +175,22 @@ class LiteOCRApp(QtCore.QObject):
 
     def _show_screenshot_overlay(self):
         """Creates and shows the screenshot overlay."""
-        self.screenshot_overlay = ScreenshotOverlay()
-        self.screenshot_overlay.selection_captured.connect(
-            self._process_captured_screenshot
-        )
-        self.screenshot_overlay.show()
-        self.screenshot_overlay.activateWindow()
-        self.screenshot_overlay.raise_()
+        try:
+            self.screenshot_overlay = ScreenshotOverlay()
+            self.screenshot_overlay.selection_captured.connect(
+                self._process_captured_screenshot
+            )
+            self.screenshot_overlay.show()
+            self.screenshot_overlay.activateWindow()
+            self.screenshot_overlay.raise_()
+        except Exception as e:
+            logging.error(f"Error showing screenshot overlay: {e}")
+            if self.tray_icon_manager:
+                self.tray_icon_manager.show_message(
+                    self.tr("LiteOCR Error"),
+                    self.tr("Error showing screenshot overlay: ") + str(e),
+                    "icon",
+                )
 
     def capture_and_process(self):
         """Initiates the screen capture process if OCR processor is ready."""
@@ -166,10 +216,18 @@ class LiteOCRApp(QtCore.QObject):
 
     def _on_ocr_finished(self, latex_text):
         """Handles successful OCR completion."""
-        pyperclip.copy(latex_text)
-        self.tray_icon_manager.show_message(
-            self.tr("LiteOCR"), self.tr("LaTeX copied to clipboard!"), "icon"
-        )
+        try:
+            pyperclip.copy(latex_text)
+            self.tray_icon_manager.show_message(
+                self.tr("LiteOCR"), self.tr("LaTeX copied to clipboard!"), "icon"
+            )
+        except Exception as e:  # pyperclip can raise various errors
+            logging.error(f"Error copying to clipboard: {e}")
+            self.tray_icon_manager.show_message(
+                self.tr("LiteOCR Error"),
+                self.tr("Failed to copy to clipboard: ") + str(e),
+                "icon",
+            )
 
     def _on_ocr_error(self, error_msg):
         """Handles OCR processing errors."""
@@ -180,31 +238,47 @@ class LiteOCRApp(QtCore.QObject):
         )
 
     def show_settings(self):
-        config_window = ConfigWindow(config_manager=self.config_manager)
-        result = config_window.exec()
+        try:
+            config_window = ConfigWindow(config_manager=self.config_manager)
+            result = config_window.exec()
 
-        # If settings were saved, reinitialize OCRProcessor with new config and reload translations
-        if result == QtWidgets.QDialog.DialogCode.Accepted:
-            self._initialize_ocr_processor()
+            # If settings were saved, reinitialize OCRProcessor with new config and reload translations
+            if result == QtWidgets.QDialog.DialogCode.Accepted:
+                self._initialize_ocr_processor()
 
-            # Reload translations
-            current_config = self.config_manager.load_config()
-            lang = current_config.get("language", "")
-            if not lang:
-                locale = QtCore.QLocale()
-                lang = locale.name()
-            self._load_translations(lang)
+                # Reload translations
+                current_config = self.config_manager.load_config()
+                lang = current_config.get("language", "")
+                if not lang:
+                    locale = QtCore.QLocale()
+                    lang = locale.name()
+                self._load_translations(lang)
 
-            # Update tray icon tooltip and menu items
-            self.tray_icon_manager.update_texts()
+                # Update tray icon tooltip and menu items
+                if self.tray_icon_manager:
+                    self.tray_icon_manager.update_texts()
+        except Exception as e:
+            logging.error(f"Error in show_settings: {e}")
+            if self.tray_icon_manager:
+                self.tray_icon_manager.show_message(
+                    self.tr("LiteOCR Error"),
+                    self.tr("Error opening settings or applying changes: ") + str(e),
+                    "icon",
+                )
 
     def run(self):
-        self.app.exec()
+        try:
+            self.app.exec()
+        except Exception as e:
+            logging.critical(f"Unhandled exception in LiteOCRApp.run: {e}")
 
 
 def main():
-    ocr_app = LiteOCRApp()
-    ocr_app.run()
+    try:
+        ocr_app = LiteOCRApp()
+        ocr_app.run()
+    except Exception as e:
+        logging.critical(f"Critical error starting LiteOCR: {e}")
 
 
 if __name__ == "__main__":
