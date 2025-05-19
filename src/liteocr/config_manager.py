@@ -13,7 +13,8 @@ class ConfigManager:
             "model": self.settings.value("model", "gpt-4.1-mini"),
             "base_url": self.settings.value("base_url", ""),
             "custom_models": self.settings.value("custom_models", ""),
-            "language": self.settings.value("language", "")
+            "language": self.settings.value("language", ""),
+            "hotkey": self.settings.value("hotkey", "<ctrl>+<alt>+s")
         }
 
     def save_config(self, config):
@@ -23,6 +24,7 @@ class ConfigManager:
         self.settings.setValue("model", config.get("model", "gpt-4.1-mini"))
         self.settings.setValue("base_url", config.get("base_url", ""))
         self.settings.setValue("language", config.get("language", ""))
+        self.settings.setValue("hotkey", config.get("hotkey", "<ctrl>+<alt>+s"))
 
     def get_api_key(self):
         """Gets the API key from the current settings."""

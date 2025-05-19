@@ -243,9 +243,13 @@ class ConfigWindow(QDialog):
             QLabel(self.tr("Screenshot Shortcut:")), 0, 0
         )
         self.shortcut_input = StyledLineEdit()
-        self.shortcut_input.setText("Ctrl+Alt+S")
-        self.shortcut_input.setReadOnly(True)
+        # self.shortcut_input.setText("Ctrl+Alt+S") # Will be loaded from config
+        # self.shortcut_input.setReadOnly(True) # User should be able to edit
         shortcut_section.content_layout.addWidget(self.shortcut_input, 0, 1)
+        shortcut_section.content_layout.addWidget(
+            QLabel(self.tr("Use format like <control>+<alt>+s or <cmd>+<shift>+z")), 1, 1
+        )
+
 
         main_layout.addWidget(shortcut_section)
 
@@ -273,6 +277,7 @@ class ConfigWindow(QDialog):
             self.provider_combo.setCurrentText(config.get("provider", "openai"))
             self.base_url_input.setText(config["base_url"])
             self.model_input.setText(config["model"])
+            self.shortcut_input.setText(config.get("hotkey", "<ctrl>+<alt>+s"))
 
             # Set language combo box
             language_map = {
@@ -315,6 +320,7 @@ class ConfigWindow(QDialog):
                 "base_url": self.base_url_input.text(),
                 "custom_models": custom_models,
                 "language": selected_language,
+                "hotkey": self.shortcut_input.text(),
             }
             self.config_manager.save_config(config)
         self.accept()
