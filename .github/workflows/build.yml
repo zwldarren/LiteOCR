@@ -29,7 +29,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install -e .[dev]
+          pip install -e .[build]
 
       - name: Build with Nuitka
         uses: Nuitka/Nuitka-Action@main

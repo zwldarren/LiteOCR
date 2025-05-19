@@ -209,25 +209,22 @@ dependencies = [
     { name = "pyside6" },
 ]
 
-[package.dev-dependencies]
-dev = [
+[package.optional-dependencies]
+build = [
     { name = "imageio" },
     { name = "nuitka" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "imageio", marker = "extra == 'build'", specifier = ">=2.37.0" },
+    { name = "nuitka", marker = "extra == 'build'", specifier = ">=2.7.3" },
     { name = "openai", specifier = ">=1.79.0" },
     { name = "pynput", specifier = ">=1.8.1" },
     { name = "pyperclip", specifier = ">=1.9.0" },
     { name = "pyside6", specifier = ">=6.9.0" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "imageio", specifier = ">=2.37.0" },
-    { name = "nuitka", specifier = ">=2.7.3" },
-]
+provides-extras = ["build"]
 
 [[package]]
 name = "nuitka"

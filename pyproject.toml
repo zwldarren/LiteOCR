@@ -11,8 +11,8 @@ dependencies = [
     "pyside6>=6.9.0",
 ]
 
-[dependency-groups]
-dev = [
+[project.optional-dependencies]
+build = [
     "imageio>=2.37.0",
     "nuitka>=2.7.3",
 ]
