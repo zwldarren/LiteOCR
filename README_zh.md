@@ -32,7 +32,7 @@ uv sync
 ### 运行程序
 
 ```bash
-uv run src/main.py
+uv run liteocr
 ```
 
 ## 🛠️ 使用方法

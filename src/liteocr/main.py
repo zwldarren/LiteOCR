@@ -1,10 +1,10 @@
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QTranslator, QLibraryInfo
-from gui.config_window import ConfigWindow
-from gui.screenshot import ScreenshotOverlay
-from ocr_processor import OCRProcessor
-from config_manager import ConfigManager
-from gui.tray_icon_manager import TrayIconManager
+from liteocr.gui.config_window import ConfigWindow
+from liteocr.gui.screenshot import ScreenshotOverlay
+from liteocr.ocr_processor import OCRProcessor
+from liteocr.config_manager import ConfigManager
+from liteocr.gui.tray_icon_manager import TrayIconManager
 import pyperclip
 from pynput import keyboard
 from PySide6.QtCore import QThread, Signal as QSignal
@@ -176,6 +176,10 @@ class LiteOCRApp(QtCore.QObject):
         self.app.exec()
 
 
-if __name__ == "__main__":
+def main():
     ocr_app = LiteOCRApp()
     ocr_app.run()
+
+
+if __name__ == "__main__":
+    main()

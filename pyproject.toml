@@ -1,7 +1,7 @@
 [project]
 name = "liteocr"
 version = "0.1.0"
-description = "Add your description here"
+description = "A lightweight OCR tool that converts screenshots to Markdown using AI models."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -16,3 +16,10 @@ dev = [
     "imageio>=2.37.0",
     "nuitka>=2.7.3",
 ]
+
+[project.scripts]
+liteocr = "liteocr.main:main"
+
+[build-system]
+requires = ["uv_build"]
+build-backend = "uv_build"
