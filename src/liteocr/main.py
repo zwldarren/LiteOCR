@@ -251,12 +251,14 @@ class LiteOCRApp(QtCore.QObject):
 
     def show_settings(self):
         try:
+            initial_config = self.config_manager.load_config()
+            old_hotkey = initial_config.get("hotkey")
+
             config_window = ConfigWindow(config_manager=self.config_manager)
             result = config_window.exec()
 
             # If settings were saved, reinitialize OCRProcessor with new config and reload translations
             if result == QtWidgets.QDialog.DialogCode.Accepted:
-                old_hotkey = self.config_manager.load_config().get("hotkey")
                 self._initialize_ocr_processor()
 
                 current_config = self.config_manager.load_config()
