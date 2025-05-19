@@ -79,6 +79,7 @@ class LiteOCRApp(QtCore.QObject):
         initial_config = self.config_manager.load_config()
         if initial_config.get("api_key"):
             self.ocr_processor = OCRProcessor(
+                str(initial_config["provider"]),
                 str(initial_config["api_key"]),
                 str(initial_config["model"]),
                 str(initial_config["base_url"]),
@@ -163,6 +164,7 @@ class LiteOCRApp(QtCore.QObject):
             current_config = self.config_manager.load_config()
             if current_config.get("api_key"):
                 self.ocr_processor = OCRProcessor(
+                    str(current_config["provider"]),
                     str(current_config["api_key"]),
                     str(current_config["model"]),
                     str(current_config["base_url"]),

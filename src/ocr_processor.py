@@ -1,13 +1,18 @@
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
 import base64
+from openai import OpenAI
 from PySide6 import QtCore
-from pydantic import SecretStr
 
 
 class OCRProcessor:
-    def __init__(self, api_key: str, model: str = "gpt-4.1-mini", base_url: str = ""):
-        self.api_key = SecretStr(api_key)
+    def __init__(
+        self,
+        provider: str,
+        api_key: str,
+        model: str = "gpt-4.1-mini",
+        base_url: str = "",
+    ):
+        self.provider = provider
+        self.api_key = api_key
         self.model = model
         self.base_url = base_url
         self.prompt = """
@@ -45,34 +50,41 @@ STRICTLY return ONLY raw Markdown text - no explanations, wrappers, Markdown cod
         try:
             image_data = base64.b64encode(screenshot_pixmap).decode("utf-8")
 
-            model = ChatOpenAI(
-                model=self.model,
+            if self.provider == "openai":
+                self.base_url = "https://api.openai.com/v1"
+            elif self.provider == "gemini":
+                self.base_url = (
+                    "https://generativelanguage.googleapis.com/v1beta/openai/"
+                )
+
+            client = OpenAI(
                 api_key=self.api_key,
                 base_url=self.base_url,
+            )
+
+            message = [
+                {"role": "user", "content": self.prompt},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{image_data}",
+                                "detail": "auto",
+                            },
+                        }
+                    ],
+                },
+            ]
+
+            response = client.chat.completions.create(
+                model=self.model,
+                messages=message,
                 temperature=0.1,
                 max_completion_tokens=8000,
             )
-
-            prompt_template = ChatPromptTemplate(
-                [
-                    {"role": "user", "content": self.prompt},
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "image",
-                                "source_type": "base64",
-                                "mime_type": "image/jpeg",
-                                "data": "{image_data}",
-                            }
-                        ],
-                    },
-                ]
-            )
-
-            chain = prompt_template | model
-            response = chain.invoke({"image_data": image_data})
-            text = response.text()
+            text = response.choices[0].message.content
             return text
         except Exception as e:
             raise Exception(f"OCR processing failed: {str(e)}")

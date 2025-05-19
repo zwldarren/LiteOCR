@@ -3,9 +3,9 @@ name = "liteocr"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
-    "langchain-openai>=0.3.17",
+    "openai>=1.79.0",
     "pynput>=1.8.1",
     "pyperclip>=1.9.0",
     "pyside6>=6.9.0",
