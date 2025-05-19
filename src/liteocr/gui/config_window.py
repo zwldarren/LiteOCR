@@ -202,6 +202,16 @@ class ConfigWindow(QDialog):
         header_layout.addStretch()
         main_layout.addLayout(header_layout)
 
+        # Language settings
+        language_section = SectionFrame(self.tr("Language Settings"))
+        language_section.content_layout.addWidget(QLabel(self.tr("Language:")), 0, 0)
+        self.language_combo = StyledComboBox()
+        self.language_combo.addItems(
+            ["System Default", "English (en_US)", "简体中文 (zh_CN)"]
+        )
+        language_section.content_layout.addWidget(self.language_combo, 0, 1)
+        main_layout.addWidget(language_section)
+
         # Provider settings
         provider_section = SectionFrame(self.tr("Provider Settings"))
         provider_section.content_layout.addWidget(QLabel(self.tr("Provider:")), 0, 0)
@@ -264,6 +274,17 @@ class ConfigWindow(QDialog):
             self.base_url_input.setText(config["base_url"])
             self.model_input.setText(config["model"])
 
+            # Set language combo box
+            language_map = {
+                "": "System Default",
+                "en_US": "English (en_US)",
+                "zh_CN": "简体中文 (zh_CN)",
+            }
+            current_lang = config.get("language", "")
+            self.language_combo.setCurrentText(
+                language_map.get(current_lang, "System Default")
+            )
+
     def _update_ui_visibility(self):
         """Updates UI element visibility based on provider selection."""
         show_base_url = self.provider_combo.currentText() == "openai-compatible"
@@ -280,12 +301,20 @@ class ConfigWindow(QDialog):
             # Initialize empty custom models
             custom_models = {}
 
+            language_map = {
+                "System Default": "",
+                "English (en_US)": "en_US",
+                "简体中文 (zh_CN)": "zh_CN",
+            }
+            selected_language = language_map[self.language_combo.currentText()]
+
             config = {
                 "api_key": self.api_key_input.text(),
                 "provider": current_provider,
                 "model": current_model,
                 "base_url": self.base_url_input.text(),
                 "custom_models": custom_models,
+                "language": selected_language,
             }
             self.config_manager.save_config(config)
         self.accept()

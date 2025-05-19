@@ -1,6 +1,5 @@
 import liteocr.resources_rc  # noqa: F401
 
-# Then import everything else
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QTranslator, QLibraryInfo
 from liteocr.gui.config_window import ConfigWindow
@@ -38,80 +37,103 @@ class LiteOCRApp(QtCore.QObject):
     def __init__(self):
         super().__init__()
 
-        # Ensure QApplication instance exists
-        _app_instance = QtWidgets.QApplication.instance()
-        if isinstance(_app_instance, QtWidgets.QApplication):
-            self.app = _app_instance
-        else:
-            self.app = QtWidgets.QApplication([])
+        self.app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+        self.config_manager = ConfigManager()
 
-        # Load translations
+        # Initialize translators
         self.qt_translator = QTranslator()
-        if self.qt_translator.load(
-            "qt_" + QtCore.QLocale().name(),
-            QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath),
-        ):
-            self.app.installTranslator(self.qt_translator)
-
         self.app_translator = QTranslator()
-        locale = QtCore.QLocale()
-        lang = locale.name()
-
-        # Load translation from Qt resource system
-        if lang != "en_US":
-            if not self.app_translator.load(f":/translations/liteocr_{lang}.qm"):
-                print(
-                    f"Warning: Could not load application translation file for language {lang}"
-                )
-            self.app.installTranslator(self.app_translator)
+        self._setup_translators()  # Load initial translations
 
         self.app.setQuitOnLastWindowClosed(False)
 
-        self.config_manager = ConfigManager()
+        self.ocr_processor = None
         self.tray_icon_manager = TrayIconManager(
             settings_callback=self.show_settings, exit_callback=self.app.quit
         )
         self.tray_icon_manager.show()
-        self.ocr_processor = None
 
-        # Initialize OCRProcessor if config is available
-        initial_config = self.config_manager.load_config()
-        if initial_config.get("api_key"):
-            self.ocr_processor = OCRProcessor(
-                str(initial_config["provider"]),
-                str(initial_config["api_key"]),
-                str(initial_config["model"]),
-                str(initial_config["base_url"]),
-            )
+        self._initialize_ocr_processor()
 
         self.screenshot_overlay = None
 
-        # Setup pynput global hotkey
+        self._setup_hotkey_listener()
+        self._connect_signals()
+
+    def _setup_hotkey_listener(self):
+        """Sets up and starts the global hotkey listener."""
         self.hotkey_listener = keyboard.GlobalHotKeys(
             {"<ctrl>+<alt>+s": self._on_hotkey_activated}
         )
         self.hotkey_listener.start()
 
-        # Connect application aboutToQuit signal to stop the hotkey listener
-        self.app.aboutToQuit.connect(self.hotkey_listener.stop)
+    def _teardown_hotkey_listener(self):
+        """Stops the global hotkey listener."""
+        if hasattr(self, "hotkey_listener") and self.hotkey_listener.is_alive():
+            self.hotkey_listener.stop()
 
-        # Connect the custom signal to the slot
+    def _connect_signals(self):
+        """Connects application signals to their respective slots."""
+        self.app.aboutToQuit.connect(self._teardown_hotkey_listener)
         self.hotkey_triggered.connect(self.capture_and_process)
+
+    def _initialize_ocr_processor(self):
+        """Initializes or reinitializes the OCR processor based on the current configuration."""
+        config = self.config_manager.load_config()
+        api_key = config.get("api_key")
+        provider = config.get("provider")
+
+        if api_key and provider:
+            self.ocr_processor = OCRProcessor(
+                str(provider),
+                str(api_key),
+                str(config.get("model", "")),
+                str(config.get("base_url", "")),
+            )
+        else:
+            self.ocr_processor = None
+
+    def _setup_translators(self):
+        """Sets up initial translations based on configuration or system locale."""
+        config = self.config_manager.load_config()
+        lang = config.get("language", "")
+        if not lang:
+            locale = QtCore.QLocale()
+            lang = locale.name()
+        self._load_translations(lang)
+
+    def _load_translations(self, lang):
+        """Loads Qt and application translations for the given language."""
+        if not hasattr(self, "app"):
+            print("Error: QApplication instance not found for translations.")
+            return
+
+        # Remove existing translators before loading new ones
+        self.app.removeTranslator(self.qt_translator)
+        self.app.removeTranslator(self.app_translator)
+
+        # Load Qt base translations
+        if self.qt_translator.load(
+            "qt_" + lang,
+            QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath),
+        ):
+            self.app.installTranslator(self.qt_translator)
+
+        # Load application translations if not English
+        if lang != "en_US":
+            if self.app_translator.load(f":/translations/liteocr_{lang}.qm"):
+                self.app.installTranslator(self.app_translator)
+            else:
+                print(
+                    f"Warning: Could not load application translation file for language {lang}"
+                )
 
     def _on_hotkey_activated(self):
         """Callback for pynput hotkey activation."""
         self.hotkey_triggered.emit()
 
-    def capture_and_process(self):
-        if not self.ocr_processor:
-            self.tray_icon_manager.show_message(
-                self.tr("LiteOCR Error"),
-                self.tr("Please configure API key first"),
-                "icon",
-            )
-            return
-
-        # Create and show the screenshot overlay
+    def _show_screenshot_overlay(self):
+        """Creates and shows the screenshot overlay."""
         self.screenshot_overlay = ScreenshotOverlay()
         self.screenshot_overlay.selection_captured.connect(
             self._process_captured_screenshot
@@ -120,17 +142,20 @@ class LiteOCRApp(QtCore.QObject):
         self.screenshot_overlay.activateWindow()
         self.screenshot_overlay.raise_()
 
-    def _process_captured_screenshot(self, screenshot_pixmap):
-        """Handles the captured screenshot pixmap asynchronously."""
-        if not screenshot_pixmap:
-            return
-
+    def capture_and_process(self):
+        """Initiates the screen capture process if OCR processor is ready."""
         if not self.ocr_processor:
             self.tray_icon_manager.show_message(
                 self.tr("LiteOCR Error"),
-                self.tr("OCR processor not initialized. Please check your API key."),
+                self.tr("Please configure API key first."),
                 "icon",
             )
+            return
+        self._show_screenshot_overlay()
+
+    def _process_captured_screenshot(self, screenshot_pixmap):
+        """Handles the captured screenshot pixmap asynchronously."""
+        if not screenshot_pixmap:
             return
 
         # Create and start worker thread
@@ -158,18 +183,20 @@ class LiteOCRApp(QtCore.QObject):
         config_window = ConfigWindow(config_manager=self.config_manager)
         result = config_window.exec()
 
-        # If settings were saved, reinitialize OCRProcessor with new config
+        # If settings were saved, reinitialize OCRProcessor with new config and reload translations
         if result == QtWidgets.QDialog.DialogCode.Accepted:
+            self._initialize_ocr_processor()
+
+            # Reload translations
             current_config = self.config_manager.load_config()
-            if current_config.get("api_key"):
-                self.ocr_processor = OCRProcessor(
-                    str(current_config["provider"]),
-                    str(current_config["api_key"]),
-                    str(current_config["model"]),
-                    str(current_config["base_url"]),
-                )
-            else:
-                self.ocr_processor = None  # Clear processor if API key is removed
+            lang = current_config.get("language", "")
+            if not lang:
+                locale = QtCore.QLocale()
+                lang = locale.name()
+            self._load_translations(lang)
+
+            # Update tray icon tooltip and menu items
+            self.tray_icon_manager.update_texts()
 
     def run(self):
         self.app.exec()

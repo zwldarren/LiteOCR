@@ -54,6 +54,8 @@ class TrayIconManager(QObject):
             exit_action.triggered.connect(exit_callback)
 
         self.tray.setContextMenu(menu)
+        self.settings_action = settings_action
+        self.exit_action = exit_action
 
     def show(self):
         """Shows the tray icon."""
@@ -64,3 +66,13 @@ class TrayIconManager(QObject):
         Note: title and message should be translated by the caller.
         """
         self.tray.showMessage(title, message, IconManager.get_icon(icon_name))
+
+    def update_texts(self):
+        """Updates translatable texts for the tray icon and menu."""
+        self.tray.setToolTip(QCoreApplication.translate("TrayIcon", "LiteOCR - Ready"))
+        if self.settings_action:
+            self.settings_action.setText(
+                QCoreApplication.translate("TrayIcon", "Settings")
+            )
+        if self.exit_action:
+            self.exit_action.setText(QCoreApplication.translate("TrayIcon", "Exit"))
