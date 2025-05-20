@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget
-from PySide6.QtGui import QPainter, QPen, QColor, QPixmap, QGuiApplication
+from PySide6.QtGui import QPainter, QPen, QColor, QPixmap, QGuiApplication, QCursor
 from PySide6.QtCore import Qt, QRect, Signal, QPoint
 import logging
 from enum import Enum
@@ -35,19 +35,16 @@ class ScreenshotOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setMouseTracking(True)
 
-        # Determine the geometry of the virtual desktop
-        virtual_desktop_rect = QRect()
-        for screen in QGuiApplication.screens():
-            virtual_desktop_rect = virtual_desktop_rect.united(screen.geometry())
-
-        if virtual_desktop_rect.isNull() or not virtual_desktop_rect.isValid():
+        current_screen = QGuiApplication.screenAt(QCursor.pos())
+        if current_screen:
+            screen_geometry = current_screen.geometry()
+            self.setGeometry(screen_geometry)
+        else:
             # Fallback if screen info is not available or problematic
             logging.warning(
-                "Could not determine virtual desktop geometry. Falling back to primary screen full-screen."
+                "Could not determine current screen geometry. Falling back to primary screen full-screen."
             )
             self.setWindowState(Qt.WindowState.WindowFullScreen)
-        else:
-            self.setGeometry(virtual_desktop_rect)
 
         self.selection_rect = QRect()
         self.drag_start_pos = QPoint()
@@ -295,46 +292,18 @@ class ScreenshotOverlay(QWidget):
             logging.warning("Selection rectangle is not valid for capture.")
             return None
 
-        # Find the screen that contains the selection rectangle
-        target_screen = None
-        screens = QGuiApplication.screens()
-        if not screens:
-            logging.error("No screens available via QGuiApplication.screens().")
-            return None
-
-        for screen in screens:
-            if screen.geometry().intersects(self.selection_rect):
-                target_screen = screen
-                break
-
+        target_screen = self.screen()
         if not target_screen:
-            # Fallback to the screen the widget is on, or primary if that fails
-            target_screen = self.screen() or QGuiApplication.primaryScreen()
-            if not target_screen:
-                logging.error("Could not determine target screen for capture.")
-                return None
-            logging.debug(
-                f"Selection rect did not intersect any screen, falling back to screen: {target_screen.name()}"
-            )
-
-        global_capture_rect = self.selection_rect.intersected(target_screen.geometry())
-
-        if global_capture_rect.isEmpty():
-            logging.warning("Selection rectangle resulted in an empty capture area.")
+            logging.error("Could not determine target screen for capture from widget.")
             return None
-
-        # QScreen.grabWindow expects coordinates relative to that screen's origin.
-        relative_capture_rect = global_capture_rect.translated(
-            -target_screen.geometry().topLeft()
-        )
 
         try:
             pixmap = target_screen.grabWindow(
                 0,  # Capture the desktop content (Window ID 0)
-                relative_capture_rect.x(),
-                relative_capture_rect.y(),
-                relative_capture_rect.width(),
-                relative_capture_rect.height(),
+                self.selection_rect.x(),
+                self.selection_rect.y(),
+                self.selection_rect.width(),
+                self.selection_rect.height(),
             )
             if pixmap.isNull():
                 logging.error("Captured pixmap is null.")
