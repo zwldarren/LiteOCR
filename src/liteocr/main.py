@@ -1,6 +1,6 @@
 import liteocr.resources_rc  # noqa: F401
 import logging
-import os
+from liteocr.logger_config import setup_logging
 
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QTranslator, QLibraryInfo
@@ -12,17 +12,6 @@ from liteocr.gui.tray_icon_manager import TrayIconManager
 from liteocr.hotkey_manager import HotkeyListenerThread
 import pyperclip
 from PySide6.QtCore import QThread, Signal
-
-# Set up logging
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler(f"{log_dir}/liteocr.log"), logging.StreamHandler()],
-)
 
 
 class OCRWorker(QThread):
@@ -320,6 +309,7 @@ class LiteOCRApp(QtCore.QObject):
 
 
 def main():
+    setup_logging()
     try:
         ocr_app = LiteOCRApp()
         ocr_app.run()
