@@ -7,10 +7,10 @@ from PySide6.QtWidgets import (
     QLabel,
     QGridLayout,
     QWidget,
+    QStyledItemDelegate,
+    QListView,
 )
-
-
-from PySide6.QtCore import Property
+from PySide6.QtCore import Property, QSize
 
 
 class StyledLineEdit(QLineEdit):
@@ -22,6 +22,38 @@ class StyledLineEdit(QLineEdit):
 class StyledComboBox(QComboBox):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self._rounded = True
+        self.setProperty("rounded", True)
+
+        self.setView(QListView())
+
+        self.setItemDelegate(QStyledItemDelegate())
+
+        self._icon_size = QSize(16, 16)
+        self.setIconSize(self._icon_size)
+
+        self.setup_arrow_icon()
+
+    def setup_arrow_icon(self):
+        pass
+
+    def showPopup(self):
+        super().showPopup()
+        popup = self.findChild(QFrame)
+        if popup:
+            popup.setMinimumWidth(self.width())
+
+    def _get_rounded(self):
+        return self._rounded
+
+    def _set_rounded(self, value):
+        if self._rounded != value:
+            self._rounded = value
+            self.setProperty("rounded", value)
+            self.style().polish(self)
+
+    rounded = Property(bool, _get_rounded, _set_rounded)
 
 
 class StyledButton(QPushButton):

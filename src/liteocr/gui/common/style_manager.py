@@ -71,36 +71,69 @@ class StyleManager:
             QComboBox {
                 border: 1px solid #606060;
                 border-radius: 4px;
-                padding: 8px;
+                padding: 8px 30px 8px 8px;
                 background-color: #333333;
                 color: #E0E0E0;
                 min-height: 20px;
+                selection-background-color: #0078D7;
+                selection-color: white;
+                text-align: left;
             }
             QComboBox:hover {
                 background-color: #323232;
+                border: 1px solid #707070;
             }
             QComboBox:focus {
                 border: 1px solid #0078D7;
             }
+            QComboBox:disabled {
+                background-color: #252525;
+                color: #808080;
+                border: 1px solid #404040;
+            }
             QComboBox::drop-down {
                 subcontrol-origin: padding;
-                subcontrol-position: top right;
-                width: 20px;
-                border-left-width: 1px;
-                border-left-color: #3C3C3C;
-                border-left-style: solid;
+                subcontrol-position: center right;
+                width: 24px;
+                border-left-width: 0px;
                 border-top-right-radius: 4px;
                 border-bottom-right-radius: 4px;
+                margin-right: 5px;
             }
             QComboBox::down-arrow {
-                width: 12px;
-                height: 12px;
+                image: url(resources/icons/arrow-down.svg);
+                width: 16px;
+                height: 16px;
             }
             QComboBox QAbstractItemView {
                 border: 1px solid #3C3C3C;
+                border-radius: 4px;
                 selection-background-color: #0078D7;
                 background-color: #2A2A2A;
                 color: #E0E0E0;
+                outline: none;
+                padding: 4px;
+            }
+            QComboBox QAbstractItemView::item {
+                min-height: 24px;
+                padding: 4px 8px;
+                border-radius: 2px;
+                margin: 2px;
+            }
+            QComboBox QAbstractItemView::item:selected {
+                background-color: #0078D7;
+                color: white;
+            }
+            QComboBox QAbstractItemView::item:hover:!selected {
+                background-color: #3A3A3A;
+            }
+            /* 为StyledComboBox添加特殊样式 */
+            StyledComboBox[rounded="true"] {
+                border-radius: 6px;
+            }
+            StyledComboBox[rounded="true"]::drop-down {
+                border-top-right-radius: 6px;
+                border-bottom-right-radius: 6px;
             }
 
             /* SectionFrame (Custom QFrame) */
