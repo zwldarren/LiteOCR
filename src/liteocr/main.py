@@ -66,6 +66,7 @@ class LiteOCRApp(QtCore.QObject):
         )
         try:
             self.tray_icon_manager.show()
+            self.tray_icon_manager.update_texts()
         except Exception as e:
             logging.error(f"Error showing tray icon: {e}")
 
