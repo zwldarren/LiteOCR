@@ -280,6 +280,7 @@ class LiteOCRApp(QtCore.QObject):
 
             self.config_window = ConfigWindow(config_manager=self.config_manager)
             self.config_window.finished.connect(self._on_config_window_closed)
+            self.config_window.hotkey_changed.connect(self._on_hotkey_changed) # Connect new signal
             result = self.config_window.exec()
 
             # If settings were saved, reinitialize OCRProcessor with new config and reload translations
@@ -302,9 +303,6 @@ class LiteOCRApp(QtCore.QObject):
 
                 # Restart hotkey listener thread if the hotkey changed
                 if old_hotkey != new_hotkey:
-                    logging.info(
-                        f"Hotkey changed from '{old_hotkey}' to '{new_hotkey}'. Restarting listener thread."
-                    )
                     self._teardown_hotkey_listener_thread()
                     self._setup_hotkey_listener_thread()
         except Exception as e:
@@ -315,6 +313,11 @@ class LiteOCRApp(QtCore.QObject):
                     self.tr("Error opening settings or applying changes: ") + str(e),
                     "icon",
                 )
+
+    def _on_hotkey_changed(self, new_hotkey_str):
+        """Handles the hotkey_changed signal from ConfigWindow."""
+        self._teardown_hotkey_listener_thread()
+        self._setup_hotkey_listener_thread()
 
     def run(self):
         try:

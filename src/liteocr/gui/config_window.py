@@ -1,167 +1,25 @@
-from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QLabel,
-    QLineEdit,
-    QComboBox,
-    QPushButton,
-    QHBoxLayout,
-    QFrame,
-    QGridLayout,
-    QWidget,
-)
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QHBoxLayout
 from PySide6.QtGui import QFont
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal as QSignal
 from .icon_manager import IconManager
-
-
-class StyledLineEdit(QLineEdit):
-    def __init__(self, placeholder_text="", *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setPlaceholderText(placeholder_text)
-        self.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #3C3C3C;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: #2A2A2A;
-                color: #E0E0E0;
-                selection-background-color: #0078D7;
-            }
-            QLineEdit:focus {
-                border: 1px solid #0078D7;
-            }
-            QLineEdit:hover {
-                background-color: #323232;
-            }
-        """)
-
-
-class StyledComboBox(QComboBox):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setStyleSheet("""
-            QComboBox {
-                border: 1px solid #3C3C3C;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: #2A2A2A;
-                color: #E0E0E0;
-                min-height: 20px;
-            }
-            QComboBox:hover {
-                background-color: #323232;
-            }
-            QComboBox:focus {
-                border: 1px solid #0078D7;
-            }
-            QComboBox::drop-down {
-                subcontrol-origin: padding;
-                subcontrol-position: top right;
-                width: 20px;
-                border-left-width: 1px;
-                border-left-color: #3C3C3C;
-                border-left-style: solid;
-                border-top-right-radius: 4px;
-                border-bottom-right-radius: 4px;
-            }
-            QComboBox::down-arrow {
-                image: "";
-                width: 12px;
-                height: 12px;
-            }
-            QComboBox QAbstractItemView {
-                border: 1px solid #3C3C3C;
-                selection-background-color: #0078D7;
-                background-color: #2A2A2A;
-                color: #E0E0E0;
-            }
-        """)
-
-
-class StyledButton(QPushButton):
-    def __init__(self, text, primary=False, *args, **kwargs):
-        super().__init__(text, *args, **kwargs)
-        if primary:
-            self.setStyleSheet("""
-                QPushButton {
-                    background-color: #0078D7;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    padding: 8px 16px;
-                    font-weight: bold;
-                }
-                QPushButton:hover {
-                    background-color: #1084E0;
-                }
-                QPushButton:pressed {
-                    background-color: #006CC1;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QPushButton {
-                    background-color: #3C3C3C;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    padding: 8px 16px;
-                }
-                QPushButton:hover {
-                    background-color: #4A4A4A;
-                }
-                QPushButton:pressed {
-                    background-color: #333333;
-                }
-            """)
-
-
-class SectionFrame(QFrame):
-    def __init__(self, title, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setFrameShape(QFrame.Shape.StyledPanel)
-        self.setStyleSheet("""
-            SectionFrame {
-                background-color: #252525;
-                border-radius: 6px;
-                margin: 5px;
-            }
-        """)
-
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(15, 15, 15, 15)
-        self.layout.setSpacing(10)
-
-        title_label = QLabel(title)
-        title_label.setStyleSheet("""
-            QLabel {
-                color: #E0E0E0;
-                font-weight: bold;
-                font-size: 14px;
-            }
-        """)
-        self.layout.addWidget(title_label)
-
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setFrameShadow(QFrame.Shadow.Sunken)
-        separator.setStyleSheet("background-color: #3C3C3C;")
-        self.layout.addWidget(separator)
-
-        self.content = QWidget()
-        self.content_layout = QGridLayout(self.content)
-        self.content_layout.setContentsMargins(0, 10, 0, 0)
-        self.content_layout.setSpacing(10)
-        self.layout.addWidget(self.content)
+from .widgets import StyledButton
+from .hotkey_recorder import HotkeyRecorder
+from .sections.language_section import LanguageSection
+from .sections.provider_section import ProviderSection
+from .sections.shortcut_section import ShortcutSection
+import logging
 
 
 class ConfigWindow(QDialog):
+    hotkey_changed = QSignal(str)
+
     def __init__(self, parent=None, config_manager=None):
         super().__init__(parent)
         self.setWindowTitle(self.tr("LiteOCR Settings"))
         self.setMinimumSize(500, 450)
         self.config_manager = config_manager
+        self.recording_hotkey = False
+        self.recorded_keys = set()
 
         self.setStyleSheet("""
             QDialog {
@@ -203,55 +61,17 @@ class ConfigWindow(QDialog):
         main_layout.addLayout(header_layout)
 
         # Language settings
-        language_section = SectionFrame(self.tr("Language Settings"))
-        language_section.content_layout.addWidget(QLabel(self.tr("Language:")), 0, 0)
-        self.language_combo = StyledComboBox()
-        self.language_combo.addItems(
-            ["System Default", "English (en_US)", "简体中文 (zh_CN)"]
-        )
-        language_section.content_layout.addWidget(self.language_combo, 0, 1)
-        main_layout.addWidget(language_section)
+        self.language_section = LanguageSection(self)
+        main_layout.addWidget(self.language_section)
 
         # Provider settings
-        provider_section = SectionFrame(self.tr("Provider Settings"))
-        provider_section.content_layout.addWidget(QLabel(self.tr("Provider:")), 0, 0)
-        self.provider_combo = StyledComboBox()
-        self.provider_combo.addItems(["openai", "openai-compatible", "gemini"])
-        self.provider_combo.currentTextChanged.connect(self._update_ui_visibility)
-        provider_section.content_layout.addWidget(self.provider_combo, 0, 1)
-
-        provider_section.content_layout.addWidget(QLabel(self.tr("LLM API Key:")), 1, 0)
-        self.api_key_input = StyledLineEdit(self.tr("Enter your API key"))
-        provider_section.content_layout.addWidget(self.api_key_input, 1, 1)
-
-        provider_section.content_layout.addWidget(QLabel(self.tr("Model:")), 2, 0)
-        self.model_input = StyledLineEdit(
-            self.tr("Enter model name (e.g. gpt-4.1-mini)")
-        )
-        provider_section.content_layout.addWidget(self.model_input, 2, 1)
-
-        self.base_url_label = QLabel(self.tr("API Base URL:"))
-        provider_section.content_layout.addWidget(self.base_url_label, 3, 0)
-        self.base_url_input = StyledLineEdit(self.tr("Enter custom API endpoint"))
-        provider_section.content_layout.addWidget(self.base_url_input, 3, 1)
-
-        main_layout.addWidget(provider_section)
+        self.provider_section = ProviderSection(self)
+        self.provider_section.provider_changed.connect(self._update_ui_visibility)
+        main_layout.addWidget(self.provider_section)
 
         # Shortcut settings
-        shortcut_section = SectionFrame(self.tr("Shortcut Settings"))
-        shortcut_section.content_layout.addWidget(
-            QLabel(self.tr("Screenshot Shortcut:")), 0, 0
-        )
-        self.shortcut_input = StyledLineEdit()
-        # self.shortcut_input.setText("Ctrl+Alt+S") # Will be loaded from config
-        # self.shortcut_input.setReadOnly(True) # User should be able to edit
-        shortcut_section.content_layout.addWidget(self.shortcut_input, 0, 1)
-        shortcut_section.content_layout.addWidget(
-            QLabel(self.tr("Use format like <control>+<alt>+s or <cmd>+<shift>+z")), 1, 1
-        )
-
-
-        main_layout.addWidget(shortcut_section)
+        self.shortcut_section = ShortcutSection(self)
+        main_layout.addWidget(self.shortcut_section)
 
         main_layout.addStretch()
 
@@ -266,61 +86,137 @@ class ConfigWindow(QDialog):
 
         self._update_ui_visibility()
 
+        # Initialize hotkey recorder
+        self.hotkey_recorder = HotkeyRecorder()
+        
         # Connect signals
         self.cancel_button.clicked.connect(self.close)
         self.save_button.clicked.connect(self._save_config)
+        self.shortcut_section.connect_signals(self.hotkey_recorder)
+        self.shortcut_section.hotkey_changed.connect(self.hotkey_changed)
 
         # Load current config if available
         if config_manager:
             config = config_manager.load_config()
-            self.api_key_input.setText(config["api_key"])
-            self.provider_combo.setCurrentText(config.get("provider", "openai"))
-            self.base_url_input.setText(config["base_url"])
-            self.model_input.setText(config["model"])
-            self.shortcut_input.setText(config.get("hotkey", "<ctrl>+<alt>+s"))
+            self.provider_section.set_values(config)
+            self.shortcut_section.set_hotkey(config.get("hotkey", "<ctrl>+<alt>+s"))
 
-            # Set language combo box
-            language_map = {
-                "": "System Default",
-                "en_US": "English (en_US)",
-                "zh_CN": "简体中文 (zh_CN)",
-            }
+            # Set language
             current_lang = config.get("language", "")
-            self.language_combo.setCurrentText(
-                language_map.get(current_lang, "System Default")
-            )
+            self.language_section.set_language(current_lang)
+
+        # Store initial hotkey to check for changes on save
+        self._initial_hotkey = config.get("hotkey", "<ctrl>+<alt>+s") if config_manager else "<ctrl>+<alt>+s"
+
+    def closeEvent(self, event):
+        """Ensures the hotkey recorder is stopped when the window is closed."""
+        if hasattr(self, "hotkey_recorder"):
+            self.hotkey_recorder.stop_recording()
+        super().closeEvent(event)
 
     def _update_ui_visibility(self):
         """Updates UI element visibility based on provider selection."""
-        show_base_url = self.provider_combo.currentText() == "openai-compatible"
-        self.base_url_label.setVisible(show_base_url)
-        self.base_url_input.setVisible(show_base_url)
+        self.provider_section.update_ui_visibility()
+
+    def _start_hotkey_recording(self):
+        """Deprecated - recording is now handled by ShortcutSection"""
+        pass
+
+    def _on_recording_started(self):
+        self.recording_hotkey = True
+        self.recorded_keys = set()
+        self.hotkey_status_label.setText(
+            self.tr("Recording... Press your desired shortcut. Press ESC to cancel.")
+        )
+        self.hotkey_status_label.setStyleSheet("color: #FFA500; font-size: 10px;")
+
+    def _on_key_pressed(self, key_str):
+        if not self.recording_hotkey:
+            return
+
+        if key_str == "esc":
+            if hasattr(self, "hotkey_recorder"):
+                self.hotkey_recorder.stop_recording(cancelled=True)
+            return
+
+        self.recorded_keys.add(key_str)
+        self._update_shortcut_display()
+
+    def _on_recording_stopped(self, hotkey_str):
+        self.recording_hotkey = False
+
+        if not hotkey_str:
+            self.hotkey_status_label.setText(
+                self.tr("No hotkey recorded. Please try again.")
+            )
+            # Red for error
+            self.hotkey_status_label.setStyleSheet("color: #FF0000; font-size: 10px;")
+            # Restore previous hotkey if available
+            config = self.config_manager.load_config()
+            self.shortcut_input.setText(config.get("hotkey", "<ctrl>+<alt>+s"))
+        else:
+            self.shortcut_input.setText(hotkey_str)
+            self.hotkey_status_label.setText(self.tr("Hotkey recorded successfully!"))
+            self.hotkey_status_label.setStyleSheet(
+                "color: #00FF00; font-size: 10px;"
+            )  # Green for success
+
+    def _update_shortcut_display(self):
+        # Sort keys for consistent display
+        sorted_keys = []
+        if "<ctrl>" in self.recorded_keys:
+            sorted_keys.append("<ctrl>")
+        if "<shift>" in self.recorded_keys:
+            sorted_keys.append("<shift>")
+        if "<alt>" in self.recorded_keys:
+            sorted_keys.append("<alt>")
+        if "<cmd>" in self.recorded_keys:
+            sorted_keys.append("<cmd>")
+
+        # Add non-modifier keys
+        non_modifiers = sorted(
+            k
+            for k in self.recorded_keys
+            if not k.startswith("<")
+            or k == "<f1>"
+            or k == "<f2>"
+            or k == "<f3>"
+            or k == "<f4>"
+            or k == "<f5>"
+            or k == "<f6>"
+            or k == "<f7>"
+            or k == "<f8>"
+            or k == "<f9>"
+            or k == "<f10>"
+            or k == "<f11>"
+            or k == "<f12>"
+        )
+        sorted_keys.extend(non_modifiers)
+
+        hotkey_str = "+".join(sorted_keys)
+        self.shortcut_input.setText(hotkey_str)
+        self.hotkey_status_label.setText(self.tr("Current shortcut: ") + hotkey_str)
+        self.hotkey_status_label.setStyleSheet("color: #E0E0E0; font-size: 10px;")
 
     def _save_config(self):
         """Saves the current configuration."""
         if self.config_manager:
-            # Get current model and provider
-            current_model = self.model_input.text()
-            current_provider = self.provider_combo.currentText()
+            config = self.provider_section.get_values()
+            config.update(
+                {
+                    "language": self.language_section.get_selected_language(),
+                    "hotkey": self.shortcut_section.get_hotkey(),
+                    "custom_models": {},  # Initialize empty custom models
+                }
+            )
 
-            # Initialize empty custom models
-            custom_models = {}
-
-            language_map = {
-                "System Default": "",
-                "English (en_US)": "en_US",
-                "简体中文 (zh_CN)": "zh_CN",
-            }
-            selected_language = language_map[self.language_combo.currentText()]
-
-            config = {
-                "api_key": self.api_key_input.text(),
-                "provider": current_provider,
-                "model": current_model,
-                "base_url": self.base_url_input.text(),
-                "custom_models": custom_models,
-                "language": selected_language,
-                "hotkey": self.shortcut_input.text(),
-            }
             self.config_manager.save_config(config)
+
+            # Emit hotkey_changed signal if the hotkey has actually changed
+            if self._initial_hotkey != config["hotkey"]:
+                logging.info(
+                    f"ConfigWindow: Hotkey changed from '{self._initial_hotkey}' to '{config['hotkey']}'. Emitting signal."
+                )
+                self._initial_hotkey = config["hotkey"]
+                self.hotkey_changed.emit(config["hotkey"])
         self.accept()
