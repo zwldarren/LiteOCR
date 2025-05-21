@@ -1,12 +1,12 @@
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import Signal
 from ..widgets import StyledLineEdit, StyledComboBox, SectionFrame
 
 
 class ProviderSection(SectionFrame):
     """Handles provider configuration UI and logic."""
 
-    provider_changed = QSignal(str)
+    provider_changed = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent.tr("Provider Settings"))
@@ -33,7 +33,9 @@ class ProviderSection(SectionFrame):
 
         self.base_url_label = QLabel(self.parent.tr("API Base URL:"))
         self.content_layout.addWidget(self.base_url_label, 3, 0)
-        self.base_url_input = StyledLineEdit(self.parent.tr("Enter custom API endpoint"))
+        self.base_url_input = StyledLineEdit(
+            self.parent.tr("Enter custom API endpoint")
+        )
         self.content_layout.addWidget(self.base_url_input, 3, 1)
 
     def update_ui_visibility(self):
@@ -55,5 +57,5 @@ class ProviderSection(SectionFrame):
             "api_key": self.api_key_input.text(),
             "provider": self.provider_combo.currentText(),
             "base_url": self.base_url_input.text(),
-            "model": self.model_input.text()
+            "model": self.model_input.text(),
         }

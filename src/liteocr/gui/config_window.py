@@ -1,17 +1,18 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QHBoxLayout
 from PySide6.QtGui import QFont
-from PySide6.QtCore import Qt, Signal as QSignal
+from PySide6.QtCore import Qt, Signal
 from .icon_manager import IconManager
 from .widgets import StyledButton
 from .hotkey_recorder import HotkeyRecorder
 from .sections.language_section import LanguageSection
 from .sections.provider_section import ProviderSection
 from .sections.shortcut_section import ShortcutSection
+from .common.style_manager import StyleManager
 import logging
 
 
 class ConfigWindow(QDialog):
-    hotkey_changed = QSignal(str)
+    hotkey_changed = Signal(str)
 
     def __init__(self, parent=None, config_manager=None):
         super().__init__(parent)
@@ -21,15 +22,8 @@ class ConfigWindow(QDialog):
         self.recording_hotkey = False
         self.recorded_keys = set()
 
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #1E1E1E;
-                color: #E0E0E0;
-            }
-            QLabel {
-                color: #E0E0E0;
-            }
-        """)
+        # Apply global styles
+        StyleManager.apply_global_styles()
 
         # Main layout
         main_layout = QVBoxLayout(self)
@@ -88,7 +82,7 @@ class ConfigWindow(QDialog):
 
         # Initialize hotkey recorder
         self.hotkey_recorder = HotkeyRecorder()
-        
+
         # Connect signals
         self.cancel_button.clicked.connect(self.close)
         self.save_button.clicked.connect(self._save_config)
@@ -106,7 +100,11 @@ class ConfigWindow(QDialog):
             self.language_section.set_language(current_lang)
 
         # Store initial hotkey to check for changes on save
-        self._initial_hotkey = config.get("hotkey", "<ctrl>+<alt>+s") if config_manager else "<ctrl>+<alt>+s"
+        self._initial_hotkey = (
+            config.get("hotkey", "<ctrl>+<alt>+s")
+            if config_manager
+            else "<ctrl>+<alt>+s"
+        )
 
     def closeEvent(self, event):
         """Ensures the hotkey recorder is stopped when the window is closed."""

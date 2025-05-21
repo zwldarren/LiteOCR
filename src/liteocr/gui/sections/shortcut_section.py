@@ -1,12 +1,12 @@
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import Signal
 from ..widgets import StyledLineEdit, StyledButton, SectionFrame
 
 
 class ShortcutSection(SectionFrame):
     """Handles screenshot shortcut configuration UI and logic."""
 
-    hotkey_changed = QSignal(str)
+    hotkey_changed = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent.tr("Shortcut Settings"))
@@ -30,9 +30,7 @@ class ShortcutSection(SectionFrame):
             self.parent.tr("Press 'Record Hotkey' to set a new shortcut.")
         )
         self.hotkey_status_label.setStyleSheet("color: #AAAAAA; font-size: 10px;")
-        self.content_layout.addWidget(
-            self.hotkey_status_label, 1, 0, 1, 3
-        )  # Span across all columns
+        self.content_layout.addWidget(self.hotkey_status_label, 1, 0, 1, 3)
 
     def set_hotkey(self, hotkey):
         """Sets the current hotkey value."""
@@ -58,7 +56,9 @@ class ShortcutSection(SectionFrame):
     def _on_recording_started(self):
         """Handles when recording starts."""
         self.hotkey_status_label.setText(
-            self.parent.tr("Recording... Press your desired shortcut. Press ESC to cancel.")
+            self.parent.tr(
+                "Recording... Press your desired shortcut. Press ESC to cancel."
+            )
         )
         self.hotkey_status_label.setStyleSheet("color: #FFA500; font-size: 10px;")
 
@@ -81,8 +81,6 @@ class ShortcutSection(SectionFrame):
             self.hotkey_status_label.setText(
                 self.parent.tr("Hotkey recorded successfully!")
             )
-            self.hotkey_status_label.setStyleSheet(
-                "color: #00FF00; font-size: 10px;"
-            )
+            self.hotkey_status_label.setStyleSheet("color: #00FF00; font-size: 10px;")
             if self._initial_hotkey != hotkey_str:
                 self.hotkey_changed.emit(hotkey_str)

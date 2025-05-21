@@ -1,10 +1,10 @@
 import logging
 from pynput import keyboard
-from PySide6.QtCore import QThread, Signal as QSignal, Slot
+from PySide6.QtCore import QThread, Signal, Slot
 
 
 class HotkeyListenerThread(QThread):
-    hotkey_activated = QSignal()
+    hotkey_activated = Signal()
 
     def __init__(self, hotkey_str, parent=None):
         super().__init__(parent)

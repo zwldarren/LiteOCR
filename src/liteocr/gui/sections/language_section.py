@@ -1,5 +1,4 @@
-from PySide6.QtWidgets import QWidget, QLabel
-from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QLabel
 from ..widgets import StyledComboBox, SectionFrame
 
 
@@ -15,11 +14,9 @@ class LanguageSection(SectionFrame):
         """Initialize language selection components."""
         self.content_layout.addWidget(QLabel(self.parent.tr("Language:")), 0, 0)
         self.language_combo = StyledComboBox()
-        self.language_combo.addItems([
-            "System Default", 
-            "English (en_US)", 
-            "简体中文 (zh_CN)"
-        ])
+        self.language_combo.addItems(
+            ["System Default", "English (en_US)", "简体中文 (zh_CN)"]
+        )
         self.content_layout.addWidget(self.language_combo, 0, 1)
 
     def get_selected_language(self):

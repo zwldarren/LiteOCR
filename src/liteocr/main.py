@@ -11,7 +11,7 @@ from liteocr.config_manager import ConfigManager
 from liteocr.gui.tray_icon_manager import TrayIconManager
 from liteocr.hotkey_manager import HotkeyListenerThread
 import pyperclip
-from PySide6.QtCore import QThread, Signal as QSignal
+from PySide6.QtCore import QThread, Signal
 
 # Set up logging
 log_dir = "logs"
@@ -26,8 +26,8 @@ logging.basicConfig(
 
 
 class OCRWorker(QThread):
-    finished = QSignal(str)
-    error = QSignal(str)
+    finished = Signal(str)
+    error = Signal(str)
 
     def __init__(self, ocr_processor, screenshot_pixmap):
         super().__init__()
@@ -275,12 +275,9 @@ class LiteOCRApp(QtCore.QObject):
             return
 
         try:
-            initial_config = self.config_manager.load_config()
-            old_hotkey = initial_config.get("hotkey")
-
             self.config_window = ConfigWindow(config_manager=self.config_manager)
             self.config_window.finished.connect(self._on_config_window_closed)
-            self.config_window.hotkey_changed.connect(self._on_hotkey_changed) # Connect new signal
+            self.config_window.hotkey_changed.connect(self._on_hotkey_changed)
             result = self.config_window.exec()
 
             # If settings were saved, reinitialize OCRProcessor with new config and reload translations
@@ -288,7 +285,6 @@ class LiteOCRApp(QtCore.QObject):
                 self._initialize_ocr_processor()
 
                 current_config = self.config_manager.load_config()
-                new_hotkey = current_config.get("hotkey")
 
                 # Reload translations
                 lang = current_config.get("language", "")
@@ -301,10 +297,6 @@ class LiteOCRApp(QtCore.QObject):
                 if self.tray_icon_manager:
                     self.tray_icon_manager.update_texts()
 
-                # Restart hotkey listener thread if the hotkey changed
-                if old_hotkey != new_hotkey:
-                    self._teardown_hotkey_listener_thread()
-                    self._setup_hotkey_listener_thread()
         except Exception as e:
             logging.error(f"Error in show_settings: {e}")
             if self.tray_icon_manager:
