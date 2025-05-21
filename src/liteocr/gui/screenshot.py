@@ -33,6 +33,7 @@ class ScreenshotOverlay(QWidget):
             | Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setMouseTracking(True)
 
         current_screen = QGuiApplication.screenAt(QCursor.pos())
