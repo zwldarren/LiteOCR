@@ -21,7 +21,7 @@ class ProviderSection(SectionFrame):
         self.provider_combo.currentTextChanged.connect(self.provider_changed)
         self.content_layout.addWidget(self.provider_combo, 0, 1)
 
-        self.content_layout.addWidget(QLabel(self.parent.tr("LLM API Key:")), 1, 0)
+        self.content_layout.addWidget(QLabel(self.parent.tr("API Key:")), 1, 0)
         self.api_key_input = StyledLineEdit(self.parent.tr("Enter your API key"))
         self.content_layout.addWidget(self.api_key_input, 1, 1)
 

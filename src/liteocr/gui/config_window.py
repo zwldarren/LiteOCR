@@ -16,7 +16,7 @@ class ConfigWindow(QDialog):
 
     def __init__(self, parent=None, config_manager=None):
         super().__init__(parent)
-        self.setWindowTitle(self.tr("LiteOCR Settings"))
+        self.setWindowTitle("LiteOCR")
         self.setMinimumSize(500, 450)
         self.config_manager = config_manager
         self.recording_hotkey = False
