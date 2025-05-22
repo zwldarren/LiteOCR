@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="/icons">
-    <file>icons/arrow-down.svg</file>
+    <file alias="arrow-down.svg">icons/arrow-down.svg</file>
     <file alias="exit-arrow.svg">icons/exit-arrow.svg</file>
     <file alias="icon-settings.svg">icons/icon-settings.svg</file>
     <file>icons/icon.png</file>

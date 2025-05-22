@@ -101,7 +101,7 @@ class StyleManager:
                 margin-right: 5px;
             }
             QComboBox::down-arrow {
-                image: url(resources/icons/arrow-down.svg);
+                image: url(:/icons/arrow-down.svg);
                 width: 16px;
                 height: 16px;
             }
