@@ -7,12 +7,9 @@
   <a href="README_zh.md">中文</a>
 </div>
 
-# LiteOCR - Quick Screenshot OCR Tool
+# LiteOCR - AI-Powered OCR Tool
 
-A lightweight OCR tool that uses large language models to convert screenshot text into Markdown format and copies it to the clipboard.
-
-> **Note**: The project is still in the early stages of development. The current version is a prototype and may have bugs. Please report any issues you encounter.
-
+This is an AI-powered OCR tool. You can use hotkeys to capture screen content, then send it to large language models for processing, automatically converting it into Markdown format. The processed result will be automatically copied to the clipboard, making it convenient for you to directly paste where needed.
 ## ✨ Features
 
 - **Quick Screenshot**: Use the hotkey (Ctrl+Alt+S) to quickly capture a screen area.
@@ -21,17 +18,31 @@ A lightweight OCR tool that uses large language models to convert screenshot tex
 - **Auto Copy**: Results are automatically copied to the clipboard.
 - **System Tray Management**: Convenient system tray icon for management.
 
-## 🚀 Installation and Usage
+## 🚀 Installation and Running
 
-### Installation
+### Install Dependencies
 
 ```bash
+# Install dependencies using pip
+pip install -e .
+# or
+# Install dependencies using uv
 uv sync
 ```
 
-### Running the Program
+### Run the Program
+
+If you don't want to run the program from source, you can directly download the executable file.
+
+Go to the [Releases](https://github.com/zwldarren/LiteOCR/releases) page to download the latest executable file, then double-click to run `liteocr.exe`.
+
+### Run from Source
 
 ```bash
+# Generate resource files using PySide6
+uv run pyside6-rcc resources/resources.qrc -o src/liteocr/resources_rc.py
+
+# Run the program
 uv run liteocr
 ```
 
