@@ -17,7 +17,7 @@ class ConfigWindow(QDialog):
     def __init__(self, parent=None, config_manager=None):
         super().__init__(parent)
         self.setWindowTitle("LiteOCR")
-        self.setMinimumSize(500, 450)
+        self.setMinimumSize(500, 700)
         self.config_manager = config_manager
         self.recording_hotkey = False
         self.recorded_keys = set()
@@ -115,6 +115,7 @@ class ConfigWindow(QDialog):
     def _update_ui_visibility(self):
         """Updates UI element visibility based on provider selection."""
         self.provider_section.update_ui_visibility()
+        self.adjustSize()
 
     def _start_hotkey_recording(self):
         """Deprecated - recording is now handled by ShortcutSection"""
