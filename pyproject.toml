@@ -5,6 +5,7 @@ description = "A lightweight OCR tool that converts screenshots to Markdown usin
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "cryptography>=45.0.3",
     "openai>=1.79.0",
     "pynput>=1.8.1",
     "pyperclip>=1.9.0",

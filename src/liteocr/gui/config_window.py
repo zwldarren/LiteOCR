@@ -205,7 +205,6 @@ class ConfigWindow(QDialog):
                 {
                     "language": self.language_section.get_selected_language(),
                     "hotkey": self.shortcut_section.get_hotkey(),
-                    "custom_models": {},  # Initialize empty custom models
                 }
             )
 
@@ -213,7 +212,7 @@ class ConfigWindow(QDialog):
 
             # Emit hotkey_changed signal if the hotkey has actually changed
             if self._initial_hotkey != config["hotkey"]:
-                logging.info(
+                logging.debug(
                     f"ConfigWindow: Hotkey changed from '{self._initial_hotkey}' to '{config['hotkey']}'. Emitting signal."
                 )
                 self._initial_hotkey = config["hotkey"]

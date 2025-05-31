@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QLabel
+from PySide6.QtWidgets import QLabel, QLineEdit
 from PySide6.QtCore import Signal
 from ..widgets import StyledLineEdit, StyledComboBox, SectionFrame
 
@@ -31,6 +31,7 @@ class ProviderSection(SectionFrame):
 
         self.content_layout.addWidget(QLabel(self.parent.tr("API Key:")), 1, 0)
         self.api_key_input = StyledLineEdit(self.parent.tr("Enter your API key"))
+        self.api_key_input.setEchoMode(QLineEdit.Password)  # 显示为密码
         self.content_layout.addWidget(self.api_key_input, 1, 1)
 
         self.content_layout.addWidget(QLabel(self.parent.tr("Model:")), 2, 0)
