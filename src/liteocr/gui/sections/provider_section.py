@@ -11,14 +11,22 @@ class ProviderSection(SectionFrame):
     def __init__(self, parent=None):
         super().__init__(parent.tr("Provider Settings"))
         self.parent = parent
+        self.providers = [
+            ("openai", parent.tr("OpenAI")),
+            ("openai-compatible", parent.tr("OpenAI-compatible")),
+            ("gemini", parent.tr("Gemini")),
+        ]
         self._setup_ui()
 
     def _setup_ui(self):
         """Initialize provider configuration components."""
         self.content_layout.addWidget(QLabel(self.parent.tr("Provider:")), 0, 0)
         self.provider_combo = StyledComboBox()
-        self.provider_combo.addItems(["openai", "openai-compatible", "gemini"])
-        self.provider_combo.currentTextChanged.connect(self.provider_changed)
+
+        for provider_key, translated_name in self.providers:
+            self.provider_combo.addItem(translated_name, provider_key)
+
+        self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
         self.content_layout.addWidget(self.provider_combo, 0, 1)
 
         self.content_layout.addWidget(QLabel(self.parent.tr("API Key:")), 1, 0)
@@ -40,22 +48,38 @@ class ProviderSection(SectionFrame):
 
     def update_ui_visibility(self):
         """Updates UI element visibility based on provider selection."""
-        show_base_url = self.provider_combo.currentText() == "openai-compatible"
+        current_index = self.provider_combo.currentIndex()
+        provider_key = self.provider_combo.itemData(current_index)
+        show_base_url = provider_key == "openai-compatible"
         self.base_url_label.setVisible(show_base_url)
         self.base_url_input.setVisible(show_base_url)
+
+    def _on_provider_changed(self, index):
+        """发射当前选中的provider_key"""
+        provider_key = self.provider_combo.itemData(index)
+        self.provider_changed.emit(provider_key)
 
     def set_values(self, config):
         """Sets the values from a config dictionary."""
         self.api_key_input.setText(config["api_key"])
-        self.provider_combo.setCurrentText(config.get("provider", "openai"))
+
+        provider_key = config.get("provider", "openai")
+        for index in range(self.provider_combo.count()):
+            if self.provider_combo.itemData(index) == provider_key:
+                self.provider_combo.setCurrentIndex(index)
+                break
+
         self.base_url_input.setText(config["base_url"])
         self.model_input.setText(config["model"])
 
     def get_values(self):
         """Returns the current values as a dictionary."""
+        current_index = self.provider_combo.currentIndex()
+        provider_key = self.provider_combo.itemData(current_index)
+
         return {
             "api_key": self.api_key_input.text(),
-            "provider": self.provider_combo.currentText(),
+            "provider": provider_key,
             "base_url": self.base_url_input.text(),
             "model": self.model_input.text(),
         }

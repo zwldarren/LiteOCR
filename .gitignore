@@ -14,3 +14,4 @@ wheels/
 *dist/
 resources_rc.py
 logs/
+.aider*

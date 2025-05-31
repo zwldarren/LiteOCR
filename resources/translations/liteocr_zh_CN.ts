@@ -94,6 +94,21 @@
         <translation>请输入自定义API端点</translation>
     </message>
     <message>
+        <location filename="../../src/liteocr/gui/sections/provider_section.py" line="13"/>
+        <source>OpenAI</source>
+        <translation>OpenAI</translation>
+    </message>
+    <message>
+        <location filename="../../src/liteocr/gui/sections/provider_section.py" line="14"/>
+        <source>OpenAI-compatible</source>
+        <translation>OpenAI兼容</translation>
+    </message>
+    <message>
+        <location filename="../../src/liteocr/gui/sections/provider_section.py" line="15"/>
+        <source>Gemini</source>
+        <translation>Gemini</translation>
+    </message>
+    <message>
         <location filename="../../src/liteocr/gui/sections/shortcut_section.py" line="20"/>
         <source>Screenshot Shortcut:</source>
         <translation>截图快捷键：</translation>
@@ -107,26 +122,6 @@
         <location filename="../../src/liteocr/gui/sections/shortcut_section.py" line="31"/>
         <source>Press 'Record Hotkey' to set a new shortcut.</source>
         <translation>点击「录制」以设置新快捷键。</translation>
-    </message>
-    <message>
-        <location filename="../../src/liteocr/gui/sections/shortcut_section.py" line="62"/>
-        <source>Recording... Press your desired shortcut. Press ESC to cancel.</source>
-        <translation>正在录制... 请按下您需要的快捷键。按ESC键取消。</translation>
-    </message>
-    <message>
-        <location filename="../../src/liteocr/gui/sections/shortcut_section.py" line="68"/>
-        <source>Recording... Current keys: </source>
-        <translation>正在录制... 当前按键：</translation>
-    </message>
-    <message>
-        <location filename="../../src/liteocr/gui/sections/shortcut_section.py" line="76"/>
-        <source>No hotkey recorded. Please try again.</source>
-        <translation>未检测到快捷键，请重试。</translation>
-    </message>
-    <message>
-        <location filename="../../src/liteocr/gui/sections/shortcut_section.py" line="83"/>
-        <source>Hotkey recorded successfully!</source>
-        <translation>快捷键录制成功！</translation>
     </message>
 </context>
 <context>
