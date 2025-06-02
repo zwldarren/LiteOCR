@@ -116,7 +116,7 @@ class LiteOCRApp(QtCore.QObject):
             api_key = config.get("api_key")
             provider = config.get("provider")
 
-            if api_key and provider:
+            if provider:
                 self.ocr_processor = OCRProcessor(
                     str(provider),
                     str(api_key),

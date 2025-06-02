@@ -1,4 +1,5 @@
 import base64
+import ollama
 from openai import OpenAI
 from PySide6 import QtCore
 
@@ -7,7 +8,7 @@ class OCRProcessor:
     def __init__(
         self,
         provider: str,
-        api_key: str,
+        api_key: str = "",
         model: str = "gpt-4.1-mini",
         base_url: str = "",
     ):
@@ -44,9 +45,6 @@ STRICTLY return ONLY raw Markdown text - no explanations, wrappers, Markdown cod
 
     def process_image(self, screenshot_pixmap: bytes) -> str:
         """Process image from URL and return LaTeX text"""
-        if not self.api_key:
-            raise ValueError("API key is not configured")
-
         try:
             image_data = base64.b64encode(screenshot_pixmap).decode("utf-8")
 
@@ -56,6 +54,21 @@ STRICTLY return ONLY raw Markdown text - no explanations, wrappers, Markdown cod
                 self.base_url = (
                     "https://generativelanguage.googleapis.com/v1beta/openai/"
                 )
+            elif self.provider == "ollama":
+                base_url = self.base_url if self.base_url else "http://localhost:11434"
+                client = ollama.Client(host=base_url)
+
+                response: ollama.ChatResponse = ollama.chat(
+                    model=self.model,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": self.prompt,
+                            "images": [image_data],
+                        },
+                    ],
+                )
+                return response.message.content
 
             client = OpenAI(
                 api_key=self.api_key,

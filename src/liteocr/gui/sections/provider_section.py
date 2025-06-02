@@ -15,6 +15,7 @@ class ProviderSection(SectionFrame):
             ("openai", parent.tr("OpenAI")),
             ("openai-compatible", parent.tr("OpenAI-compatible")),
             ("gemini", parent.tr("Gemini")),
+            ("ollama", parent.tr("Ollama")),
         ]
         self._setup_ui()
 
@@ -29,12 +30,14 @@ class ProviderSection(SectionFrame):
         self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
         self.content_layout.addWidget(self.provider_combo, 0, 1)
 
-        self.content_layout.addWidget(QLabel(self.parent.tr("API Key:")), 1, 0)
+        self.api_key_label = QLabel(self.parent.tr("API Key:"))
+        self.content_layout.addWidget(self.api_key_label, 1, 0)
         self.api_key_input = StyledLineEdit(self.parent.tr("Enter your API key"))
         self.api_key_input.setEchoMode(QLineEdit.Password)  # 显示为密码
         self.content_layout.addWidget(self.api_key_input, 1, 1)
 
-        self.content_layout.addWidget(QLabel(self.parent.tr("Model:")), 2, 0)
+        self.model_label = QLabel(self.parent.tr("Model:"))
+        self.content_layout.addWidget(self.model_label, 2, 0)
         self.model_input = StyledLineEdit(
             self.parent.tr("Enter model name (e.g. gpt-4.1-mini)")
         )
@@ -51,7 +54,14 @@ class ProviderSection(SectionFrame):
         """Updates UI element visibility based on provider selection."""
         current_index = self.provider_combo.currentIndex()
         provider_key = self.provider_combo.itemData(current_index)
-        show_base_url = provider_key == "openai-compatible"
+
+        # Show/Hide API Key input
+        show_api_key = provider_key not in ["ollama"]
+        self.api_key_label.setVisible(show_api_key)
+        self.api_key_input.setVisible(show_api_key)
+
+        # Show/Hide API Base URL input
+        show_base_url = provider_key in ["openai-compatible", "ollama"]
         self.base_url_label.setVisible(show_base_url)
         self.base_url_input.setVisible(show_base_url)
 

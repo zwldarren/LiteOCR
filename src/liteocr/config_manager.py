@@ -31,7 +31,6 @@ class ConfigManager:
             "provider": self.settings.value("provider", "openai"),
             "model": self.settings.value("model", "gpt-4.1-mini"),
             "base_url": self.settings.value("base_url", ""),
-            "custom_models": self.settings.value("custom_models", ""),
             "language": self.settings.value("language", ""),
             "hotkey": self.settings.value("hotkey", "<ctrl>+<alt>+s"),
         }
@@ -85,10 +84,6 @@ class ConfigManager:
     def get_model(self):
         """Retrieve the model from the current settings."""
         return self.settings.value("model", "gpt-4.1-mini")
-
-    def get_custom_models(self):
-        """Retrieve custom models from the current settings for a specific provider."""
-        return self.settings.value("custom_models", "")
 
     def get_base_url(self):
         """Retrieve the base URL from the current settings."""

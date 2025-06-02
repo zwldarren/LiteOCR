@@ -6,7 +6,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "cryptography>=45.0.3",
-    "openai>=1.79.0",
+    "ollama>=0.5.1",
+    "openai>=1.82.1",
     "pynput>=1.8.1",
     "pyperclip>=1.9.0",
     "pyside6>=6.9.0",
@@ -15,7 +16,7 @@ dependencies = [
 [project.optional-dependencies]
 build = [
     "imageio>=2.37.0",
-    "nuitka>=2.7.3",
+    "nuitka>=2.7.5",
 ]
 
 [project.scripts]
