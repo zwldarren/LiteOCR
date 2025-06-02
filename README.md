@@ -12,11 +12,9 @@
 This is an AI-powered OCR tool. You can use hotkeys to capture screen content, then send it to large language models for processing, automatically converting it into Markdown format. The processed result will be automatically copied to the clipboard, making it convenient for you to directly paste where needed.
 ## ✨ Features
 
-- **Quick Screenshot**: Use the hotkey (Ctrl+Alt+S) to quickly capture a screen area.
-- **Intelligent Recognition**: Automatically recognizes mathematical formulas, tables, and text formatting.
-- **Format Conversion**: Converts to structured Markdown/LaTeX format.
-- **Auto Copy**: Results are automatically copied to the clipboard.
-- **System Tray Management**: Convenient system tray icon for management.
+- **Quick Screenshot**: Use changeable hotkeys to quickly capture screen areas, send them to large language models, and convert them into Markdown format.
+- **System Tray Management**: Convenient system tray icon management.
+- **Support for multiple model providers**: OpenAI, OpenAI compatible, Google AI Studio (Gemini), Ollama.
 
 ## 🚀 Installation and Running
 
